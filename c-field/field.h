@@ -50,7 +50,7 @@ static int secp256k1_fe_normalizes_to_zero(secp256k1_fe *r);
 static int secp256k1_fe_normalizes_to_zero_var(secp256k1_fe *r);
 
 /** Set a field element equal to a small integer. Resulting field element is normalized. */
-static void secp256k1_fe_set_int(secp256k1_fe *r, int a);
+static void secp256k1_fe_set_int(secp256k1_fe *r, uint64_t a);
 
 /** Sets a field element equal to zero, initializing all fields. */
 static void secp256k1_fe_clear(secp256k1_fe *a);
