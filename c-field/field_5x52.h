@@ -9,15 +9,15 @@
 
 #include <stdint.h>
 
-typedef struct secp256k1_fe {
+typedef struct {
     /* X = sum(i=0..4, n[i]*2^(i*52)) mod p
      * where p = 2^256 - 0x1000003D1
      */
     uint64_t n[5];
-/*#ifdef VERIFY
+#ifdef VERIFY
     int magnitude;
     int normalized;
-#endif*/
+#endif
 } secp256k1_fe;
 
 /* Unpacks a constant into a overlapping multi-limbed FE element. */
@@ -29,11 +29,11 @@ typedef struct secp256k1_fe {
     ((uint64_t)(d6) >> 16) | (((uint64_t)(d7)) << 16) \
 }
 
-/*#ifdef VERIFY
+#ifdef VERIFY
 #define SECP256K1_FE_CONST(d7, d6, d5, d4, d3, d2, d1, d0) {SECP256K1_FE_CONST_INNER((d7), (d6), (d5), (d4), (d3), (d2), (d1), (d0)), 1, 1}
 #else
 #define SECP256K1_FE_CONST(d7, d6, d5, d4, d3, d2, d1, d0) {SECP256K1_FE_CONST_INNER((d7), (d6), (d5), (d4), (d3), (d2), (d1), (d0))}
-#endif*/
+#endif
 
 typedef struct {
     uint64_t n[4];

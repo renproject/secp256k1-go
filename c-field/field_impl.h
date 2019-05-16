@@ -11,7 +11,7 @@
 #include "libsecp256k1-config.h"
 #endif
 
-// #include "util.h"
+#include "util.h"
 #include "num.h"
 
 // #if defined(USE_FIELD_10X26)
