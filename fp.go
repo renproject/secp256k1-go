@@ -31,15 +31,15 @@ func (r *Fp) SetBytes(b []byte) {
 	b32 := make([]byte, 32)
 	copy(b32[32-len(b):], b)
 	cBytes := (*C.uchar)(C.CBytes(b32))
-	defer C.free(unsafe.Pointer(cBytes))
 	C.secp256k1_fe_set_b32(&r.inner, cBytes)
+	C.free(unsafe.Pointer(cBytes))
 }
 
 func (r *Fp) Bytes() []byte {
 	cBytes := C.malloc(C.sizeof_char * 32)
-	defer C.free(unsafe.Pointer(cBytes))
 	C.secp256k1_fe_get_b32((*C.uchar)(cBytes), &r.inner)
 	b := C.GoBytes(cBytes, 32)
+	C.free(unsafe.Pointer(cBytes))
 	return b
 }
 
@@ -54,7 +54,7 @@ func (r *Fp) Add(a, b *Fp) {
 }
 
 func (r *Fp) Neg(a *Fp) {
-	C.secp256k1_fe_negate(&r.inner, &a.inner, 1)
+	C.secp256k1_fe_negate(&r.inner, &a.inner, 0)
 	C.secp256k1_fe_normalize_var(&r.inner)
 }
 
