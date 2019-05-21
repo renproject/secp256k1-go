@@ -19,18 +19,28 @@ var _ = Describe("Wrapped field elements", func() {
 		return big.NewInt(0).SetBytes(b)
 	}
 
+	paddedBytes := func(b []byte) []byte {
+		ret := make([]byte, 32)
+		copy(ret[32-len(b):], b)
+		return ret
+	}
+
 	Context("When doing arithmetic in Fp", func() {
 		It("Should add correctly", func() {
 			for i := 0; i < TRIALS; i++ {
 				x, y := randomBig256(), randomBig256()
 				sum := big.NewInt(0).Add(x, y)
 				sum.Mod(sum, P)
-				a := secp256k1.NewFp(0)
-				b := secp256k1.NewFp(0)
-				c := secp256k1.NewFp(0)
-				a.SetBytes(x.Bytes())
-				b.SetBytes(y.Bytes())
-				c.Add(&a, &b)
+				a := secp256k1.NewSecp256k1(0)
+				b := secp256k1.NewSecp256k1(0)
+				c := secp256k1.NewSecp256k1(0)
+				a.SetB32(paddedBytes(x.Bytes()))
+				b.SetB32(paddedBytes(y.Bytes()))
+
+				c.Set(&a)
+				c.Add(&b)
+				c.NormalizeVar()
+
 				Expect(c.BigInt().Cmp(sum)).To(Equal(0))
 			}
 		})
@@ -39,10 +49,13 @@ var _ = Describe("Wrapped field elements", func() {
 			for i := 0; i < TRIALS; i++ {
 				x := randomBig256()
 				neg := big.NewInt(0).Sub(P, x)
-				a := secp256k1.NewFp(0)
-				b := secp256k1.NewFp(0)
-				a.SetBytes(x.Bytes())
-				b.Neg(&a)
+				a := secp256k1.NewSecp256k1(0)
+				b := secp256k1.NewSecp256k1(0)
+				a.SetB32(paddedBytes(x.Bytes()))
+
+				b.Negate(&a, 0)
+				b.NormalizeVar()
+
 				Expect(b.BigInt().Cmp(neg)).To(Equal(0))
 			}
 		})
@@ -52,12 +65,15 @@ var _ = Describe("Wrapped field elements", func() {
 				x, y := randomBig256(), randomBig256()
 				prod := big.NewInt(0).Mul(x, y)
 				prod.Mod(prod, P)
-				a := secp256k1.NewFp(0)
-				b := secp256k1.NewFp(0)
-				c := secp256k1.NewFp(0)
-				a.SetBytes(x.Bytes())
-				b.SetBytes(y.Bytes())
+				a := secp256k1.NewSecp256k1(0)
+				b := secp256k1.NewSecp256k1(0)
+				c := secp256k1.NewSecp256k1(0)
+
+				a.SetB32(paddedBytes(x.Bytes()))
+				b.SetB32(paddedBytes(y.Bytes()))
 				c.Mul(&a, &b)
+				c.NormalizeVar()
+
 				Expect(c.BigInt().Cmp(prod)).To(Equal(0))
 			}
 		})
@@ -66,10 +82,13 @@ var _ = Describe("Wrapped field elements", func() {
 			for i := 0; i < TRIALS; i++ {
 				x := randomBig256()
 				inv := big.NewInt(0).ModInverse(x, P)
-				a := secp256k1.NewFp(0)
-				b := secp256k1.NewFp(0)
-				a.SetBytes(x.Bytes())
+				a := secp256k1.NewSecp256k1(0)
+				b := secp256k1.NewSecp256k1(0)
+
+				a.SetB32(paddedBytes(x.Bytes()))
 				b.Inv(&a)
+				b.NormalizeVar()
+
 				Expect(b.BigInt().Cmp(inv)).To(Equal(0))
 			}
 		})
