@@ -4,8 +4,6 @@ package secp256k1
 #include <stdlib.h>
 
 #include "c-field/field_impl.h"
-#include "c-field/field_5x52.h"
-#include "c-field/field_5x52_impl.h"
 */
 import "C"
 import (
