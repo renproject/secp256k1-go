@@ -32,22 +32,7 @@
 #  define SECP256K1_INLINE inline
 # endif
 
-/* Like assert(), but when VERIFY is defined, and side-effect safe. */
-#if defined(COVERAGE)
-#define VERIFY_CHECK(check)
-#define VERIFY_SETUP(stmt)
-#elif defined(VERIFY)
-#define VERIFY_CHECK CHECK
-#define VERIFY_SETUP(stmt) do { stmt; } while(0)
-#else
-#define VERIFY_CHECK(cond) do { (void)(cond); } while(0)
-#define VERIFY_SETUP(stmt)
-#endif
-
 /* Macro for restrict, when available and not in a VERIFY build. */
-#if defined(SECP256K1_BUILD) && defined(VERIFY)
-# define SECP256K1_RESTRICT
-#else
 # if (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L) )
 #  if SECP256K1_GNUC_PREREQ(3,0)
 #   define SECP256K1_RESTRICT __restrict__
@@ -59,6 +44,5 @@
 # else
 #  define SECP256K1_RESTRICT restrict
 # endif
-#endif
 
 #endif /* SECP256K1_UTIL_H */

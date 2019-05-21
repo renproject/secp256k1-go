@@ -14,10 +14,6 @@ typedef struct secp256k1_fe {
      * where p = 2^256 - 0x1000003D1
      */
     uint64_t n[5];
-#ifdef VERIFY
-    int magnitude;
-    int normalized;
-#endif
 } secp256k1_fe;
 
 typedef struct {
