@@ -8,7 +8,7 @@
 #define SECP256K1_FIELD_REPR_IMPL_H
 
 #include "util.h"
-#include "field.h"
+#include "field_5x52.h"
 #include "field_5x52_asm_impl.h"
 
 /** Implements arithmetic modulo FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFF FFFFFFFE FFFFFC2F,
