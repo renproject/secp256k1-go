@@ -3,10 +3,6 @@ package secp256k1
 /*
 #include <stdlib.h>
 
-#define USE_FIELD_INV_BUILTIN
-#define USE_FIELD_5X52
-#define USE_NUM_GMP
-
 #include "c-field/field_impl.h"
 #include "c-field/field_5x52.h"
 #include "c-field/field_5x52_impl.h"
@@ -34,31 +30,6 @@ func (r *Secp256k1) Set(a *Secp256k1) {
 func (r *Secp256k1) BigInt() *big.Int {
 	return big.NewInt(0).SetBytes(r.GetB32())
 }
-
-/*
-func (r *Secp256k1) Add(a, b *Secp256k1) {
-	r.Set(a)
-	C.secp256k1_fe_add(&r.inner, &b.inner)
-	C.secp256k1_fe_normalize_var(&r.inner)
-}
-
-func (r *Secp256k1) Neg(a *Secp256k1) {
-	C.secp256k1_fe_negate(&r.inner, &a.inner, 0)
-	C.secp256k1_fe_normalize_var(&r.inner)
-}
-
-func (r *Secp256k1) Mul(a, b *Secp256k1) {
-	C.secp256k1_fe_mul(&r.inner, &a.inner, &b.inner)
-	C.secp256k1_fe_normalize_var(&r.inner)
-}
-
-func (r *Secp256k1) Inv(a *Secp256k1) {
-	C.secp256k1_fe_inv_var(&r.inner, &a.inner)
-	C.secp256k1_fe_normalize_var(&r.inner)
-}
-*/
-
-// Library functions
 
 func (r *Secp256k1) Normalize() {
 	C.secp256k1_fe_normalize(&r.inner)
