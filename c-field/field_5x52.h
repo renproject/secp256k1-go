@@ -16,8 +16,4 @@ typedef struct secp256k1_fe {
     uint64_t n[5];
 } secp256k1_fe;
 
-typedef struct {
-    uint64_t n[4];
-} secp256k1_fe_storage;
-
 #endif /* SECP256K1_FIELD_REPR_H */
