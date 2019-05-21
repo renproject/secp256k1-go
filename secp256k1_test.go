@@ -31,9 +31,9 @@ var _ = Describe("Wrapped field elements", func() {
 				x, y := randomBig256(), randomBig256()
 				sum := big.NewInt(0).Add(x, y)
 				sum.Mod(sum, P)
-				a := secp256k1.NewSecp256k1(0)
-				b := secp256k1.NewSecp256k1(0)
-				c := secp256k1.NewSecp256k1(0)
+				a := secp256k1.New(0)
+				b := secp256k1.New(0)
+				c := secp256k1.New(0)
 				a.SetB32(paddedBytes(x.Bytes()))
 				b.SetB32(paddedBytes(y.Bytes()))
 
@@ -49,8 +49,8 @@ var _ = Describe("Wrapped field elements", func() {
 			for i := 0; i < TRIALS; i++ {
 				x := randomBig256()
 				neg := big.NewInt(0).Sub(P, x)
-				a := secp256k1.NewSecp256k1(0)
-				b := secp256k1.NewSecp256k1(0)
+				a := secp256k1.New(0)
+				b := secp256k1.New(0)
 				a.SetB32(paddedBytes(x.Bytes()))
 
 				b.Negate(&a, 0)
@@ -65,9 +65,9 @@ var _ = Describe("Wrapped field elements", func() {
 				x, y := randomBig256(), randomBig256()
 				prod := big.NewInt(0).Mul(x, y)
 				prod.Mod(prod, P)
-				a := secp256k1.NewSecp256k1(0)
-				b := secp256k1.NewSecp256k1(0)
-				c := secp256k1.NewSecp256k1(0)
+				a := secp256k1.New(0)
+				b := secp256k1.New(0)
+				c := secp256k1.New(0)
 
 				a.SetB32(paddedBytes(x.Bytes()))
 				b.SetB32(paddedBytes(y.Bytes()))
@@ -82,8 +82,8 @@ var _ = Describe("Wrapped field elements", func() {
 			for i := 0; i < TRIALS; i++ {
 				x := randomBig256()
 				inv := big.NewInt(0).ModInverse(x, P)
-				a := secp256k1.NewSecp256k1(0)
-				b := secp256k1.NewSecp256k1(0)
+				a := secp256k1.New(0)
+				b := secp256k1.New(0)
 
 				a.SetB32(paddedBytes(x.Bytes()))
 				b.Inv(&a)

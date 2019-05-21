@@ -15,7 +15,7 @@ type Secp256k1 struct {
 	inner C.struct_secp256k1_fe
 }
 
-func NewSecp256k1(a uint64) Secp256k1 {
+func New(a uint64) Secp256k1 {
 	inner := C.struct_secp256k1_fe{}
 	C.secp256k1_fe_set_int(&inner, C.ulong(a))
 	return Secp256k1{inner}
