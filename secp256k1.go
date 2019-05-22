@@ -17,7 +17,7 @@ type Secp256k1 struct {
 
 func New(a uint64) Secp256k1 {
 	inner := C.struct_secp256k1_fe{}
-	C.secp256k1_fe_set_int(&inner, C.ulong(a))
+	C.secp256k1_fe_set_int(&inner, C.ulonglong(a))
 	return Secp256k1{inner}
 }
 
@@ -50,7 +50,7 @@ func (r *Secp256k1) NormalizesToZeroVar() bool {
 }
 
 func (r *Secp256k1) SetUint64(a uint64) {
-	C.secp256k1_fe_set_int(&r.inner, C.ulong(a))
+	C.secp256k1_fe_set_int(&r.inner, C.ulonglong(a))
 }
 
 func (r *Secp256k1) Clear() {
