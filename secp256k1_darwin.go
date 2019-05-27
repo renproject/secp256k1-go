@@ -1,3 +1,4 @@
+// +build darwin
 package secp256k1
 
 /*
