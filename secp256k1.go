@@ -50,7 +50,7 @@ func (r *Secp256k1) NormalizesToZeroVar() bool {
 }
 
 func (r *Secp256k1) SetUint64(a uint64) {
-	C.secp256k1_fe_set_int(&r.inner, C.ulong(a))
+	C.secp256k1_fe_set_int(&r.inner, C.uint64_t(a))
 }
 
 func (r *Secp256k1) Clear() {
