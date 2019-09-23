@@ -109,5 +109,21 @@ var _ = Describe("Wrapped field elements", func() {
 				Expect(z.Int().Cmp(sum)).To(Equal(0))
 			}
 		})
+
+		It("Should negate correctly", func() {
+			for i := 0; i < TRIALS; i++ {
+				x := secp256k1.RandomSecp256k1N()
+				y := secp256k1.NewSecp256k1N(0)
+				neg := x.Int()
+				neg.Mod(neg, N)
+				neg.Sub(N, neg)
+
+				y.Neg(&x, 0)
+				y.Normalize()
+
+				Expect(y.Int().Cmp(neg)).To(Equal(0))
+			}
+		})
+
 	})
 })

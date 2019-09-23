@@ -186,11 +186,12 @@ func RandomSecp256k1N() Secp256k1N {
 	ret.limbs[1] = binary.LittleEndian.Uint64(val[8:]) >> 12
 	ret.limbs[2] = binary.LittleEndian.Uint64(val[16:]) >> 12
 	ret.limbs[3] = binary.LittleEndian.Uint64(val[24:]) >> 12
-	ret.limbs[4] = binary.LittleEndian.Uint64(val[32:]) >> 12
+	ret.limbs[4] = binary.LittleEndian.Uint64(val[32:]) >> 16
 
 	return ret
 }
 
+// TODO: Should this reduce modulo N?
 func (x *Secp256k1N) Int() *big.Int {
 	ret := big.NewInt(0)
 
@@ -258,8 +259,12 @@ func (x *Secp256k1N) Sub(y, z *Secp256k1N) {
 }
 
 // Neg returns the additive inverse of a field element.
-func (x *Secp256k1N) Neg() {
-	panic("unimplemented")
+func (x *Secp256k1N) Neg(y *Secp256k1N, m uint) {
+	x.limbs[0] = 0x25e8cd0364141*2*(uint64(m)+1) - y.limbs[0]
+	x.limbs[1] = 0xe6af48a03bbfd*2*(uint64(m)+1) - y.limbs[1]
+	x.limbs[2] = 0xffffffebaaedc*2*(uint64(m)+1) - y.limbs[2]
+	x.limbs[3] = 0xfffffffffffff*2*(uint64(m)+1) - y.limbs[3]
+	x.limbs[4] = 0x0ffffffffffff*2*(uint64(m)+1) - y.limbs[4]
 }
 
 // Mul returns a new field element that is the product of the two field
