@@ -6,7 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/republicprotocol/secp256k1-go"
+	"github.com/renproject/secp256k1-go"
 )
 
 var _ = Describe("Wrapped field elements", func() {

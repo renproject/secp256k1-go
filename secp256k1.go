@@ -25,7 +25,7 @@ const r2 uint64 = 0x1455123
 
 func mulQQ(x, y uint64) (uint64, uint64) {
 	var z [2]uint64
-	C.mulqq(C.ulong(x), C.ulong(y), (*C.ulong)(&z[0]))
+	C.mulqq(C.uint64_t(x), C.uint64_t(y), (*C.uint64_t)(&z[0]))
 	return z[0], z[1]
 }
 
@@ -68,7 +68,7 @@ func (r *Secp256k1P) NormalizesToZeroVar() bool {
 }
 
 func (r *Secp256k1P) SetUint64(a uint64) {
-	C.secp256k1_fe_set_int(&r.inner, C.ulong(a))
+	C.secp256k1_fe_set_int(&r.inner, C.uint64_t(a))
 }
 
 func (r *Secp256k1P) Clear() {

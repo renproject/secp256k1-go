@@ -1,4 +1,4 @@
-module github.com/republicprotocol/secp256k1-go
+module github.com/renproject/secp256k1-go
 
 go 1.12
 
