@@ -125,5 +125,21 @@ var _ = Describe("Wrapped field elements", func() {
 			}
 		})
 
+		It("Should multiply correctly", func() {
+			for i := 0; i < TRIALS; i++ {
+				x, y := secp256k1.RandomSecp256k1N(), secp256k1.RandomSecp256k1N()
+				z := secp256k1.NewSecp256k1N(0)
+				prod := big.NewInt(0).Mul(x.Int(), y.Int())
+				prod.Mod(prod, N)
+
+				x.Normalize()
+				y.Normalize()
+				z.Mul(&x, &y)
+				z.Normalize()
+
+				Expect(z.Int().Cmp(prod)).To(Equal(0))
+			}
+		})
+
 	})
 })
