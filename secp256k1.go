@@ -371,21 +371,15 @@ func (x *Secp256k1N) Mul(y, z *Secp256k1N) {
 	c8u += c8l >> 52
 	c8l &= 0xfffffffffffff
 
-	// TODO: These values are constants and should be hard coded.
-	tmp0, tmp1 = mulQQ(r0, r1)
-	s01l := tmp0 & 0xfffffffffffff
-	s01u := tmp1<<12 + tmp0>>52
-	tmp0, tmp1 = mulQQ(r0, r2)
-	s02l := tmp0 & 0xfffffffffffff
-	s02u := tmp1<<12 + tmp0>>52
-	tmp0, tmp1 = mulQQ(r1, r1)
-	s11l := tmp0 & 0xfffffffffffff
-	s11u := tmp1<<12 + tmp0>>52
-	tmp0, tmp1 = mulQQ(r1, r2)
-	s12l := tmp0 & 0xfffffffffffff
-	s12u := tmp1<<12 + tmp0>>52
-	tmp0, _ = mulQQ(r2, r2)
-	s22l := tmp0 & 0xfffffffffffff
+	s01l := uint64(0x777920542397e)
+	s01u := uint64(0x15910772c569a)
+	s02l := uint64(0xe2ffd866a831d)
+	s02u := uint64(0x1152492)
+	s11l := uint64(0xcbaebca011004)
+	s11u := uint64(0x280dd43d3893)
+	s12l := uint64(0xcca28498bee46)
+	s12u := uint64(0x202b7e)
+	s22l := uint64(0x19d671c952ac9)
 
 	tmp0, tmp1 = mulQQ(r0, c8u)
 	f0l := tmp0 & 0xfffffffffffff
@@ -397,15 +391,6 @@ func (x *Secp256k1N) Mul(y, z *Secp256k1N) {
 	f2l := tmp0 & 0xfffffffffffff
 	f2u := tmp1<<12 + tmp0>>52
 
-	s01u += s01l >> 52
-	s01l &= 0xfffffffffffff
-	s02u += s02l >> 52
-	s02l &= 0xfffffffffffff
-	s11u += s11l >> 52
-	s11l &= 0xfffffffffffff
-	s12u += s12l >> 52
-	s12l &= 0xfffffffffffff
-	s22l &= 0xfffffffffffff
 	f0u += f0l >> 52
 	f0l &= 0xfffffffffffff
 	f1u += f1l >> 52
