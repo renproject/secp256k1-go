@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-static void secp256k1n_mul(uint64_t *r, const uint64_t *a, const uint64_t *b) {
+static void secp256k1n_mul_inner(uint64_t *r, const uint64_t *a, const uint64_t *b) {
 /**
  * Registers: rdx:rax = multiplication accumulator
  *            r9:r8   = c
@@ -251,18 +251,18 @@ __asm__ __volatile__(
     "mulq %%rdx\n"
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
-	/* r[4] = d & M (partial result) */
-    "movq $0xfffffffffffff,%%rdx\n"
+	/* r[4] = d & (M>>4) (partial result) */
+    "movq $0x0ffffffffffff,%%rdx\n"
     "andq %%rcx,%%rdx\n"
     "movq %%rdx,32(%%rdi)\n"
 
-    /* d >>= 52 */
-    "shrdq $52,%%r15,%%rcx\n"
+    /* d >>= 48 */
+    "shrdq $48,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
 	/* tmp1 = d */
 	"movq %%rcx,%q1\n"
-	/* d *= r0<<4 */
-	"movq $0xda1732fc9bebf0,%%rax\n"
+	/* d *= r0 */
+	"movq $0xda1732fc9bebf,%%rax\n"
 	"mulq %%rcx\n"
     "movq %%rax,%%rcx\n"
     "movq %%rdx,%%r15\n"
@@ -315,8 +315,8 @@ __asm__ __volatile__(
 	/* d >>= 52 */
     "shrdq $52,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
-	/* d += tmp1 * (r1<<4) */
-	"movq $0x1950b75fc44020,%%rax\n"
+	/* d += tmp1 * r1 */
+	"movq $0x1950b75fc4402,%%rax\n"
 	"mulq %q1\n"
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
@@ -422,8 +422,8 @@ __asm__ __volatile__(
 	/* d >>= 52 */
     "shrdq $52,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
-	/* d += tmp1 * (r2<<4) */
-	"movq $0x14551230,%%rax\n"
+	/* d += tmp1 * r2 */
+	"movq $0x1455123,%%rax\n"
 	"mulq %q1\n"
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"

@@ -39,3 +39,19 @@ func BenchmarkMulN(b *testing.B) {
 		res.Mul(&l, &r)
 	}
 }
+
+func BenchmarkInvN(b *testing.B) {
+	x := make([]Secp256k1N, 100)
+	res := NewSecp256k1N(0)
+
+	for i := range x {
+		x[i] = RandomSecp256k1N()
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		r := x[i%100]
+		res.Inv(&r)
+	}
+}
