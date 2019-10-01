@@ -318,8 +318,8 @@ __asm__ __volatile__(
 	/* d += tmp1 * (r1<<4) */
 	"movq $0x1950b75fc44020,%%rax\n"
 	"mulq %q1\n"
-    "movq %%rax,%%rcx\n"
-    "movq %%rdx,%%r15\n"
+    "addq %%rax,%%rcx\n"
+    "adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
 	"movq %q8,%%r8\n"
 	"movq %q9,%%r9\n"
@@ -425,8 +425,8 @@ __asm__ __volatile__(
 	/* d += tmp1 * (r2<<4) */
 	"movq $0x14551230,%%rax\n"
 	"mulq %q1\n"
-    "movq %%rax,%%rcx\n"
-    "movq %%rdx,%%r15\n"
+    "addq %%rax,%%rcx\n"
+    "adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
 	"movq %q8,%%r8\n"
 	"movq %q9,%%r9\n"
@@ -568,7 +568,7 @@ __asm__ __volatile__(
     "xorq %%r15,%%r15\n"
 	/* r[4] += d (complete) */
     "addq %%rcx,32(%%rdi)\n"
-: "+S"(a), "=m"(tmp1), "=m"(tmp2), "=m"(tmp3), "=m"(cl5), "=m"(cu5), "=m"(cl6), "=m"(cu6), "=m"(cl7), "=m"(cu7), "=m"(cl8), "=m"(cl8)
+: "+S"(a), "=m"(tmp1), "=m"(tmp2), "=m"(tmp3), "=m"(cl5), "=m"(cu5), "=m"(cl6), "=m"(cu6), "=m"(cl7), "=m"(cu7), "=m"(cl8), "=m"(cu8)
 : "b"(b), "D"(r)
 : "%rax", "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15", "cc", "memory"
 );

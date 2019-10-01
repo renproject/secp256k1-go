@@ -132,8 +132,6 @@ var _ = Describe("Wrapped field elements", func() {
 				prod := big.NewInt(0).Mul(x.Int(), y.Int())
 				prod.Mod(prod, N)
 
-				x.Normalize()
-				y.Normalize()
 				z.Mul(&x, &y)
 				z.Normalize()
 
