@@ -9,7 +9,7 @@ void secp256k1n_mul(secp256k1n *r, const secp256k1n *a, const secp256k1n * b) {
 }
 
 void secp256k1n_sqr(secp256k1n *r, const secp256k1n *a) {
-	secp256k1n_mul_inner(r->n, a->n, a->n);
+	secp256k1n_sqr_inner(r->n, a->n);
 }
 
 void secp256k1n_inv(secp256k1n *r, const secp256k1n *a) {

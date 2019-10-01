@@ -139,5 +139,17 @@ var _ = Describe("Wrapped field elements", func() {
 			}
 		})
 
+		It("Should invert correctly", func() {
+			for i := 0; i < TRIALS; i++ {
+				x := secp256k1.RandomSecp256k1N()
+				z := secp256k1.NewSecp256k1N(0)
+				inv := big.NewInt(0).ModInverse(x.Int(), N)
+
+				z.Inv(&x)
+				z.Normalize()
+
+				Expect(z.Int().Cmp(inv)).To(Equal(0))
+			}
+		})
 	})
 })
