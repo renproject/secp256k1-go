@@ -1,5 +1,8 @@
 #include <stdint.h>
 
+// FIXME: If b = r then b will get clobbered during computation giving
+// incorrect results. Though, it seems that libsecp256k1 does not seem to avoid
+// this problem.
 static void secp256k1n_mul_inner(uint64_t *r, const uint64_t *a, const uint64_t *b) {
 /**
  * Registers: rdx:rax = multiplication accumulator
@@ -10,7 +13,7 @@ static void secp256k1n_mul_inner(uint64_t *r, const uint64_t *a, const uint64_t 
  *            rdi     = r
  *            rsi     = a / t?
  */
-  uint64_t tmp1, tmp2, tmp3, cl5, cu5, cl6, cu6, cl7, cu7, cl8, cu8;
+  uint64_t tmp, cl5, cu5, cl6, cu6, cl7, cu7, cl8, cu8;
 __asm__ __volatile__(
     "movq 0(%%rsi),%%r10\n"
     "movq 8(%%rsi),%%r11\n"
@@ -39,8 +42,8 @@ __asm__ __volatile__(
     "addq %%rax,%%r8\n"
     "adcq %%rdx,%%r9\n"
 	/* c5 = c */
-	"movq %%r8,%q4\n"
-	"movq %%r9,%q5\n"
+	"movq %%r8,%q2\n"
+	"movq %%r9,%q3\n"
 	/* c = a2 * b4 */
     "movq 32(%%rbx),%%rax\n"
     "mulq %%r12\n"
@@ -57,8 +60,8 @@ __asm__ __volatile__(
     "addq %%rax,%%r8\n"
     "adcq %%rdx,%%r9\n"
 	/* c6 = c */
-	"movq %%r8,%q6\n"
-	"movq %%r9,%q7\n"
+	"movq %%r8,%q4\n"
+	"movq %%r9,%q5\n"
 	/* c = a3 * b4 */
     "movq 32(%%rbx),%%rax\n"
     "mulq %%r13\n"
@@ -70,17 +73,17 @@ __asm__ __volatile__(
     "addq %%rax,%%r8\n"
     "adcq %%rdx,%%r9\n"
 	/* c7 = c */
-	"movq %%r8,%q8\n"
-	"movq %%r9,%q9\n"
+	"movq %%r8,%q6\n"
+	"movq %%r9,%q7\n"
 	/* c8 = a4 * b4 */
     "movq 32(%%rbx),%%rax\n"
     "mulq %%r14\n"
-    "movq %%rax,%q10\n"
-    "movq %%rdx,%q11\n"
+    "movq %%rax,%q8\n"
+    "movq %%rdx,%q9\n"
 
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d = c * ((r1*r2) >> 52)<<9 (two terms) */
     "movq %%r8,%%rax\n"
@@ -89,8 +92,8 @@ __asm__ __volatile__(
     "movq %%rax,%%rcx\n"
     "movq %%rdx,%%r15\n"
 	/* c = c5 >> 52 */
-	"movq %q4,%%r8\n"
-	"movq %q5,%%r9\n"
+	"movq %q2,%%r8\n"
+	"movq %q3,%%r9\n"
 	"shrdq $52,%%r9,%%r8\n"
 	/* d += c * (r2<<4) */
 	"movq %%r8,%%rax\n"
@@ -99,8 +102,8 @@ __asm__ __volatile__(
 	"addq %%rax,%%rcx\n"
 	"adcq %%rdx,%%r15\n"
 	/* c = c6 >> 52 */
-	"movq %q6,%%r8\n"
-	"movq %q7,%%r9\n"
+	"movq %q4,%%r8\n"
+	"movq %q5,%%r9\n"
 	"shrdq $52,%%r9,%%r8\n"
 	/* d += c * (r1<<4) */
 	"movq %%r8,%%rax\n"
@@ -109,8 +112,8 @@ __asm__ __volatile__(
 	"addq %%rax,%%rcx\n"
 	"adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
 	"shrdq $52,%%r9,%%r8\n"
 	/* d += c * (r0<<4) */
 	"movq %%r8,%%rax\n"
@@ -119,8 +122,8 @@ __asm__ __volatile__(
 	"addq %%rax,%%rcx\n"
 	"adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r2*r2)<<8 */
     "movq %%r8,%%rax\n"
@@ -149,7 +152,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c6 & M) * (r2<<4) */
-    "movq %q6,%%rax\n"
+    "movq %q4,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x14551230,%%rdx\n"
@@ -157,7 +160,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c7 & M) * (r1<<4) */
-    "movq %q8,%%rax\n"
+    "movq %q6,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x1950b75fc44020,%%rdx\n"
@@ -165,7 +168,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * (r0<<4) */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xda1732fc9bebf0,%%rdx\n"
@@ -181,8 +184,8 @@ __asm__ __volatile__(
     "shrdq $52,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
 	/* c = c6 >> 52 */
-	"movq %q6,%%r8\n"
-	"movq %q7,%%r9\n"
+	"movq %q4,%%r8\n"
+	"movq %q5,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r2<<4) */
     "movq %%r8,%%rax\n"
@@ -191,8 +194,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r1<<4) */
     "movq %%r8,%%rax\n"
@@ -201,8 +204,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r0<<4) */
     "movq %%r8,%%rax\n"
@@ -236,7 +239,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c7 & M) * (r2<<4) */
-    "movq %q8,%%rax\n"
+    "movq %q6,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x14551230,%%rdx\n"
@@ -244,7 +247,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * (r1<<4) */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x1950b75fc44020,%%rdx\n"
@@ -259,7 +262,7 @@ __asm__ __volatile__(
     /* d >>= 48 */
     "shrdq $48,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
-	/* tmp1 = d */
+	/* tmp = d */
 	"movq %%rcx,%q1\n"
 	/* d *= r0 */
 	"movq $0xda1732fc9bebf,%%rax\n"
@@ -267,8 +270,8 @@ __asm__ __volatile__(
     "movq %%rax,%%rcx\n"
     "movq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r2) & M)<<8 */
     "movq %%r8,%%rax\n"
@@ -277,8 +280,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r1) & M)<<8 */
     "movq %%r8,%%rax\n"
@@ -292,7 +295,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c5 & M) * (r0<<4) */
-    "movq %q4,%%rax\n"
+    "movq %q2,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xda1732fc9bebf0,%%rdx\n"
@@ -300,7 +303,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * ((r0*r2) & M)<<8 */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xe2ffd866a831d00,%%rdx\n"
@@ -315,14 +318,14 @@ __asm__ __volatile__(
 	/* d >>= 52 */
     "shrdq $52,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
-	/* d += tmp1 * r1 */
+	/* d += tmp * r1 */
 	"movq $0x1950b75fc4402,%%rax\n"
 	"mulq %q1\n"
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r2) >> 52)<<8 */
     "movq %%r8,%%rax\n"
@@ -337,8 +340,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r1) >> 52)<<8 */
     "movq %%r8,%%rax\n"
@@ -353,8 +356,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c5 >> 52 */
-	"movq %q4,%%r8\n"
-	"movq %q5,%%r9\n"
+	"movq %q2,%%r8\n"
+	"movq %q3,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r0<<4) */
     "movq %%r8,%%rax\n"
@@ -363,7 +366,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * ((r0*r2) >> 52)<<8 */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x115249200,%%rdx\n"
@@ -371,8 +374,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r2) & M)<<8 */
     "movq %%r8,%%rax\n"
@@ -391,7 +394,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* d += (c5 & M) * (r1<<4) */
-    "movq %q4,%%rax\n"
+    "movq %q2,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x1950b75fc44020,%%rdx\n"
@@ -399,7 +402,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* d += (c6 & M) * (r0<<4) */
-    "movq %q6,%%rax\n"
+    "movq %q4,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xda1732fc9bebf0,%%rdx\n"
@@ -407,7 +410,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* d += (c8 & M) * ((r1*r2) & M)<<8 */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xcca28498bee4600,%%rdx\n"
@@ -422,14 +425,14 @@ __asm__ __volatile__(
 	/* d >>= 52 */
     "shrdq $52,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
-	/* d += tmp1 * r2 */
+	/* d += tmp * r2 */
 	"movq $0x1455123,%%rax\n"
 	"mulq %q1\n"
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r1*r2) >> 52)<<8 */
     "movq %%r8,%%rax\n"
@@ -444,8 +447,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r1*r1) >> 52)<<8 */
     "movq %%r8,%%rax\n"
@@ -466,8 +469,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c5 >> 52 */
-	"movq %q4,%%r8\n"
-	"movq %q5,%%r9\n"
+	"movq %q2,%%r8\n"
+	"movq %q3,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r1<<4) */
     "movq %%r8,%%rax\n"
@@ -476,8 +479,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c6 >> 52 */
-	"movq %q6,%%r8\n"
-	"movq %q7,%%r9\n"
+	"movq %q4,%%r8\n"
+	"movq %q5,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r0<<4) */
     "movq %%r8,%%rax\n"
@@ -486,7 +489,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * ((r1*r2) >> 52)<<8 */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x202b7e00,%%rdx\n"
@@ -494,8 +497,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r1*r2) & M)<<8 */
     "movq %%r8,%%rax\n"
@@ -519,7 +522,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c5 & M) * (r2<<4) */
-    "movq %q4,%%rax\n"
+    "movq %q2,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x14551230,%%rdx\n"
@@ -527,7 +530,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c6 & M) * (r1<<4) */
-    "movq %q6,%%rax\n"
+    "movq %q4,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x1950b75fc44020,%%rdx\n"
@@ -535,7 +538,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c7 & M) * (r0<<4) */
-    "movq %q8,%%rax\n"
+    "movq %q6,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xda1732fc9bebf0,%%rdx\n"
@@ -543,7 +546,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * ((r2*r2)<<8) */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x19d671c952ac900,%%rdx\n"
@@ -568,7 +571,7 @@ __asm__ __volatile__(
     "xorq %%r15,%%r15\n"
 	/* r[4] += d (complete) */
     "addq %%rcx,32(%%rdi)\n"
-: "+S"(a), "=m"(tmp1), "=m"(tmp2), "=m"(tmp3), "=m"(cl5), "=m"(cu5), "=m"(cl6), "=m"(cu6), "=m"(cl7), "=m"(cu7), "=m"(cl8), "=m"(cu8)
+: "+S"(a), "=m"(tmp), "=m"(cl5), "=m"(cu5), "=m"(cl6), "=m"(cu6), "=m"(cl7), "=m"(cu7), "=m"(cl8), "=m"(cu8)
 : "b"(b), "D"(r)
 : "%rax", "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15", "cc", "memory"
 );
@@ -584,7 +587,7 @@ static void secp256k1n_sqr_inner(uint64_t *r, const uint64_t *a) {
  *            rdi     = r
  *            rsi     = a / t?
  */
-  uint64_t tmp1, tmp2, tmp3, cl5, cu5, cl6, cu6, cl7, cu7, cl8, cu8;
+  uint64_t tmp, cl5, cu5, cl6, cu6, cl7, cu7, cl8, cu8;
 __asm__ __volatile__(
     "movq 0(%%rsi),%%r10\n"
     "movq 8(%%rsi),%%r11\n"
@@ -613,8 +616,8 @@ __asm__ __volatile__(
     "addq %%rax,%%r8\n"
     "adcq %%rdx,%%r9\n"
 	/* c5 = c */
-	"movq %%r8,%q4\n"
-	"movq %%r9,%q5\n"
+	"movq %%r8,%q2\n"
+	"movq %%r9,%q3\n"
 	/* c = a2 * b4 */
     "movq %%r14,%%rax\n"
     "mulq %%r12\n"
@@ -631,8 +634,8 @@ __asm__ __volatile__(
     "addq %%rax,%%r8\n"
     "adcq %%rdx,%%r9\n"
 	/* c6 = c */
-	"movq %%r8,%q6\n"
-	"movq %%r9,%q7\n"
+	"movq %%r8,%q4\n"
+	"movq %%r9,%q5\n"
 	/* c = a3 * b4 */
     "movq %%r14,%%rax\n"
     "mulq %%r13\n"
@@ -644,17 +647,17 @@ __asm__ __volatile__(
     "addq %%rax,%%r8\n"
     "adcq %%rdx,%%r9\n"
 	/* c7 = c */
-	"movq %%r8,%q8\n"
-	"movq %%r9,%q9\n"
+	"movq %%r8,%q6\n"
+	"movq %%r9,%q7\n"
 	/* c8 = a4 * b4 */
     "movq %%r14,%%rax\n"
     "mulq %%r14\n"
-    "movq %%rax,%q10\n"
-    "movq %%rdx,%q11\n"
+    "movq %%rax,%q8\n"
+    "movq %%rdx,%q9\n"
 
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d = c * ((r1*r2) >> 52)<<9 (two terms) */
     "movq %%r8,%%rax\n"
@@ -663,8 +666,8 @@ __asm__ __volatile__(
     "movq %%rax,%%rcx\n"
     "movq %%rdx,%%r15\n"
 	/* c = c5 >> 52 */
-	"movq %q4,%%r8\n"
-	"movq %q5,%%r9\n"
+	"movq %q2,%%r8\n"
+	"movq %q3,%%r9\n"
 	"shrdq $52,%%r9,%%r8\n"
 	/* d += c * (r2<<4) */
 	"movq %%r8,%%rax\n"
@@ -673,8 +676,8 @@ __asm__ __volatile__(
 	"addq %%rax,%%rcx\n"
 	"adcq %%rdx,%%r15\n"
 	/* c = c6 >> 52 */
-	"movq %q6,%%r8\n"
-	"movq %q7,%%r9\n"
+	"movq %q4,%%r8\n"
+	"movq %q5,%%r9\n"
 	"shrdq $52,%%r9,%%r8\n"
 	/* d += c * (r1<<4) */
 	"movq %%r8,%%rax\n"
@@ -683,8 +686,8 @@ __asm__ __volatile__(
 	"addq %%rax,%%rcx\n"
 	"adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
 	"shrdq $52,%%r9,%%r8\n"
 	/* d += c * (r0<<4) */
 	"movq %%r8,%%rax\n"
@@ -693,8 +696,8 @@ __asm__ __volatile__(
 	"addq %%rax,%%rcx\n"
 	"adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r2*r2)<<8 */
     "movq %%r8,%%rax\n"
@@ -723,7 +726,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c6 & M) * (r2<<4) */
-    "movq %q6,%%rax\n"
+    "movq %q4,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x14551230,%%rdx\n"
@@ -731,7 +734,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c7 & M) * (r1<<4) */
-    "movq %q8,%%rax\n"
+    "movq %q6,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x1950b75fc44020,%%rdx\n"
@@ -739,7 +742,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * (r0<<4) */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xda1732fc9bebf0,%%rdx\n"
@@ -755,8 +758,8 @@ __asm__ __volatile__(
     "shrdq $52,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
 	/* c = c6 >> 52 */
-	"movq %q6,%%r8\n"
-	"movq %q7,%%r9\n"
+	"movq %q4,%%r8\n"
+	"movq %q5,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r2<<4) */
     "movq %%r8,%%rax\n"
@@ -765,8 +768,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r1<<4) */
     "movq %%r8,%%rax\n"
@@ -775,8 +778,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r0<<4) */
     "movq %%r8,%%rax\n"
@@ -810,7 +813,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c7 & M) * (r2<<4) */
-    "movq %q8,%%rax\n"
+    "movq %q6,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x14551230,%%rdx\n"
@@ -818,7 +821,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * (r1<<4) */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x1950b75fc44020,%%rdx\n"
@@ -833,7 +836,7 @@ __asm__ __volatile__(
     /* d >>= 48 */
     "shrdq $48,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
-	/* tmp1 = d */
+	/* tmp = d */
 	"movq %%rcx,%q1\n"
 	/* d *= r0 */
 	"movq $0xda1732fc9bebf,%%rax\n"
@@ -841,8 +844,8 @@ __asm__ __volatile__(
     "movq %%rax,%%rcx\n"
     "movq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r2) & M)<<8 */
     "movq %%r8,%%rax\n"
@@ -851,8 +854,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r1) & M)<<8 */
     "movq %%r8,%%rax\n"
@@ -866,7 +869,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c5 & M) * (r0<<4) */
-    "movq %q4,%%rax\n"
+    "movq %q2,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xda1732fc9bebf0,%%rdx\n"
@@ -874,7 +877,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * ((r0*r2) & M)<<8 */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xe2ffd866a831d00,%%rdx\n"
@@ -889,14 +892,14 @@ __asm__ __volatile__(
 	/* d >>= 52 */
     "shrdq $52,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
-	/* d += tmp1 * r1 */
+	/* d += tmp * r1 */
 	"movq $0x1950b75fc4402,%%rax\n"
 	"mulq %q1\n"
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r2) >> 52)<<8 */
     "movq %%r8,%%rax\n"
@@ -911,8 +914,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r1) >> 52)<<8 */
     "movq %%r8,%%rax\n"
@@ -927,8 +930,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c5 >> 52 */
-	"movq %q4,%%r8\n"
-	"movq %q5,%%r9\n"
+	"movq %q2,%%r8\n"
+	"movq %q3,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r0<<4) */
     "movq %%r8,%%rax\n"
@@ -937,7 +940,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * ((r0*r2) >> 52)<<8 */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x115249200,%%rdx\n"
@@ -945,8 +948,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r0*r2) & M)<<8 */
     "movq %%r8,%%rax\n"
@@ -965,7 +968,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* d += (c5 & M) * (r1<<4) */
-    "movq %q4,%%rax\n"
+    "movq %q2,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x1950b75fc44020,%%rdx\n"
@@ -973,7 +976,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* d += (c6 & M) * (r0<<4) */
-    "movq %q6,%%rax\n"
+    "movq %q4,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xda1732fc9bebf0,%%rdx\n"
@@ -981,7 +984,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* d += (c8 & M) * ((r1*r2) & M)<<8 */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xcca28498bee4600,%%rdx\n"
@@ -996,14 +999,14 @@ __asm__ __volatile__(
 	/* d >>= 52 */
     "shrdq $52,%%r15,%%rcx\n"
     "xorq %%r15,%%r15\n"
-	/* d += tmp1 * r2 */
+	/* d += tmp * r2 */
 	"movq $0x1455123,%%rax\n"
 	"mulq %q1\n"
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c7 >> 52 */
-	"movq %q8,%%r8\n"
-	"movq %q9,%%r9\n"
+	"movq %q6,%%r8\n"
+	"movq %q7,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r1*r2) >> 52)<<8 */
     "movq %%r8,%%rax\n"
@@ -1018,8 +1021,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r1*r1) >> 52)<<8 */
     "movq %%r8,%%rax\n"
@@ -1040,8 +1043,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c5 >> 52 */
-	"movq %q4,%%r8\n"
-	"movq %q5,%%r9\n"
+	"movq %q2,%%r8\n"
+	"movq %q3,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r1<<4) */
     "movq %%r8,%%rax\n"
@@ -1050,8 +1053,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c6 >> 52 */
-	"movq %q6,%%r8\n"
-	"movq %q7,%%r9\n"
+	"movq %q4,%%r8\n"
+	"movq %q5,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * (r0<<4) */
     "movq %%r8,%%rax\n"
@@ -1060,7 +1063,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * ((r1*r2) >> 52)<<8 */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x202b7e00,%%rdx\n"
@@ -1068,8 +1071,8 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
 	/* c = c8 >> 52 */
-	"movq %q10,%%r8\n"
-	"movq %q11,%%r9\n"
+	"movq %q8,%%r8\n"
+	"movq %q9,%%r9\n"
     "shrdq $52,%%r9,%%r8\n"
     /* d += c * ((r1*r2) & M)<<8 */
     "movq %%r8,%%rax\n"
@@ -1093,7 +1096,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c5 & M) * (r2<<4) */
-    "movq %q4,%%rax\n"
+    "movq %q2,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x14551230,%%rdx\n"
@@ -1101,7 +1104,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c6 & M) * (r1<<4) */
-    "movq %q6,%%rax\n"
+    "movq %q4,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x1950b75fc44020,%%rdx\n"
@@ -1109,7 +1112,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c7 & M) * (r0<<4) */
-    "movq %q8,%%rax\n"
+    "movq %q6,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0xda1732fc9bebf0,%%rdx\n"
@@ -1117,7 +1120,7 @@ __asm__ __volatile__(
     "addq %%rax,%%rcx\n"
     "adcq %%rdx,%%r15\n"
     /* d += (c8 & M) * ((r2*r2)<<8) */
-    "movq %q10,%%rax\n"
+    "movq %q8,%%rax\n"
     "movq $0xfffffffffffff,%%rdx\n"
     "andq %%rdx,%%rax\n"
     "movq $0x19d671c952ac900,%%rdx\n"
@@ -1142,7 +1145,7 @@ __asm__ __volatile__(
     "xorq %%r15,%%r15\n"
 	/* r[4] += d (complete) */
     "addq %%rcx,32(%%rdi)\n"
-: "+S"(a), "=m"(tmp1), "=m"(tmp2), "=m"(tmp3), "=m"(cl5), "=m"(cu5), "=m"(cl6), "=m"(cu6), "=m"(cl7), "=m"(cu7), "=m"(cl8), "=m"(cu8)
+: "+S"(a), "=m"(tmp), "=m"(cl5), "=m"(cu5), "=m"(cl6), "=m"(cu6), "=m"(cl7), "=m"(cu7), "=m"(cl8), "=m"(cu8)
 : "D"(r)
 : "%rax", "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15", "cc", "memory"
 );
