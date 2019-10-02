@@ -187,18 +187,8 @@ func RandomSecp256k1N() Secp256k1N {
 }
 
 func (x Secp256k1N) Generate(r *mrand.Rand, size int) reflect.Value {
-	val := make([]byte, 40)
-	_, err := r.Read(val)
-	if err != nil {
-		panic("could not generate a random byte")
-	}
-	var ret Secp256k1N
-	ret.limbs[0] = binary.LittleEndian.Uint64(val[0:]) >> 12
-	ret.limbs[1] = binary.LittleEndian.Uint64(val[8:]) >> 12
-	ret.limbs[2] = binary.LittleEndian.Uint64(val[16:]) >> 12
-	ret.limbs[3] = binary.LittleEndian.Uint64(val[24:]) >> 12
-	ret.limbs[4] = binary.LittleEndian.Uint64(val[32:]) >> 16
-
+	// TODO: We don't use the provided rng here. Does this matter?
+	ret := RandomSecp256k1N()
 	return reflect.ValueOf(ret)
 }
 

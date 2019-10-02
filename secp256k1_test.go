@@ -146,5 +146,59 @@ var _ = Describe("Wrapped field elements", func() {
 				return z.Int().Cmp(inv) == 0
 			}, nil)
 		})
+
+		It("Should check equaty correctly", func() {
+			quick.Check(func(x secp256k1.Secp256k1N) bool {
+				var z, inv secp256k1.Secp256k1N
+				z.Set(&x)
+
+				// Try to get a different limbed representation
+				inv.Inv(&z)
+				z.Sqr(&z)
+				z.Mul(&z, &inv)
+
+				return z.Eq(&x)
+			}, nil)
+		})
+
+		It("Should correctly construct the zero element", func() {
+			quick.Check(func(x secp256k1.Secp256k1N) bool {
+				var z secp256k1.Secp256k1N
+				zero := secp256k1.ZeroSecp256k1N()
+
+				// The defining property of the zero element is that it is the
+				// additive identity
+				z.Add(&x, &zero)
+
+				return z.Eq(&x)
+			}, nil)
+		})
+
+		It("Should correctly construct the one element", func() {
+			quick.Check(func(x secp256k1.Secp256k1N) bool {
+				var z secp256k1.Secp256k1N
+				one := secp256k1.OneSecp256k1N()
+
+				// The defining property of the zero element is that it is the
+				// multiplicative identity
+				z.Mul(&x, &one)
+
+				return z.Eq(&x)
+			}, nil)
+		})
+
+		It("Should correctly identify the zero element", func() {
+			quick.Check(func(x secp256k1.Secp256k1N) bool {
+				z := secp256k1.ZeroSecp256k1N()
+				return z.IsZero()
+			}, nil)
+		})
+
+		It("Should correctly identify the one element", func() {
+			quick.Check(func(x secp256k1.Secp256k1N) bool {
+				z := secp256k1.OneSecp256k1N()
+				return z.IsOne()
+			}, nil)
+		})
 	})
 })
