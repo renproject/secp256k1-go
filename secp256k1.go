@@ -150,6 +150,7 @@ type Secp256k1N struct {
 	limbs [5]uint64
 }
 
+// NewSecp256k1N returns a new field element with value equal to x.
 func NewSecp256k1N(x uint64) Secp256k1N {
 	return Secp256k1N{limbs: [5]uint64{x, 0, 0, 0, 0}}
 }
@@ -165,6 +166,7 @@ func OneSecp256k1N() Secp256k1N {
 	return NewSecp256k1N(1)
 }
 
+// Set copies the value of y into x.
 func (x *Secp256k1N) Set(y *Secp256k1N) {
 	x.limbs = y.limbs
 }
@@ -186,13 +188,16 @@ func RandomSecp256k1N() Secp256k1N {
 	return ret
 }
 
+// Generate implements the quick.Generator interface.
 func (x Secp256k1N) Generate(r *mrand.Rand, size int) reflect.Value {
 	// TODO: We don't use the provided rng here. Does this matter?
 	ret := RandomSecp256k1N()
 	return reflect.ValueOf(ret)
 }
 
-// TODO: Should this reduce modulo N?
+// Int returns a big.Int that has the same value that x represents.
+// NOTE: Currently this does not reduce modulo N.
+// TODO: Should it?
 func (x *Secp256k1N) Int() *big.Int {
 	ret := big.NewInt(0)
 
@@ -204,6 +209,8 @@ func (x *Secp256k1N) Int() *big.Int {
 	return ret
 }
 
+// Normalize reduces the limbed representation of x so that it is less than the
+// prime and all of the limbs are in valid base 52 ranges.
 func (x *Secp256k1N) Normalize() {
 	t0, t1, t2, t3, t4 := x.limbs[0], x.limbs[1], x.limbs[2], x.limbs[3], x.limbs[4]
 
@@ -242,7 +249,7 @@ func (x *Secp256k1N) Normalize() {
 	x.limbs[4] = t4
 }
 
-// Add returns a new field element that is the sum of the two field elements.
+// Add computes the field addition of y and z and stores it in x.
 func (x *Secp256k1N) Add(y, z *Secp256k1N) {
 	x.limbs[0] = y.limbs[0] + z.limbs[0]
 	x.limbs[1] = y.limbs[1] + z.limbs[1]
@@ -251,7 +258,9 @@ func (x *Secp256k1N) Add(y, z *Secp256k1N) {
 	x.limbs[4] = y.limbs[4] + z.limbs[4]
 }
 
-// Neg returns the additive inverse of a field element.
+// Neg computes the additive inverse of y and stores it in x. The second
+// argument, m, is the magnitude of y - if y has been normalised that m = 1 is
+// sufficient, otherwise a larger value may be needed for a correct result.
 func (x *Secp256k1N) Neg(y *Secp256k1N, m uint) {
 	x.limbs[0] = 0x25e8cd0364141*2*(uint64(m)+1) - y.limbs[0]
 	x.limbs[1] = 0xe6af48a03bbfd*2*(uint64(m)+1) - y.limbs[1]
@@ -260,19 +269,23 @@ func (x *Secp256k1N) Neg(y *Secp256k1N, m uint) {
 	x.limbs[4] = 0x0ffffffffffff*2*(uint64(m)+1) - y.limbs[4]
 }
 
-// Mul returns a new field element that is the product of the two field
-// elements.
+// Mul Performs the field multiplication of y and z and stores it in x.
+// NOTE: Until the relevant fixme in the implementation of C.secp256k1_mul is
+// addressed, the case where x == z (as pointers) will give incorrect results.
+// In the meantime, if z == x then call the function with the arguments
+// swapped; x.Mul(x, y) instead of x.Mul(y, x). If it also the case that x ==
+// y, then x.Sqr(x) should be used instead.
 func (x *Secp256k1N) Mul(y, z *Secp256k1N) {
 	C.secp256k1n_mul((*C.secp256k1n)(unsafe.Pointer(x)), (*C.secp256k1n)(unsafe.Pointer(y)), (*C.secp256k1n)(unsafe.Pointer(z)))
 }
 
+// Sqr computes the square of y and stores it in x. That is, x = y*y.
 func (x *Secp256k1N) Sqr(y *Secp256k1N) {
 	C.secp256k1n_sqr((*C.secp256k1n)(unsafe.Pointer(x)), (*C.secp256k1n)(unsafe.Pointer(y)))
 }
 
-// Inv returns a new field element that is the multiplicative inverse of the
-// given field element. If the field element is the zero element, then the
-// function will panic.
+// Inv computes the multiplicative inverse of y and stores it in x. If y is
+// equal to the zero element, then the result will also be the zero element.
 func (x *Secp256k1N) Inv(y *Secp256k1N) {
 	C.secp256k1n_inv((*C.secp256k1n)(unsafe.Pointer(x)), (*C.secp256k1n)(unsafe.Pointer(y)))
 }
