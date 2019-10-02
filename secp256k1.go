@@ -41,6 +41,17 @@ func RandomSecp256k1P() Secp256k1P {
 	return ret
 }
 
+// ZeroSecp256k1P returns the zero element (additive identity) of the field.
+func ZeroSecp256k1P() Secp256k1P {
+	return NewSecp256k1P(0)
+}
+
+// OneSecp256k1P returns the one element (multiplicative identity) of the
+// field.
+func OneSecp256k1P() Secp256k1P {
+	return NewSecp256k1P(1)
+}
+
 // Generate implements the quick.Generator interface.
 func (x Secp256k1P) Generate(r *mrand.Rand, size int) reflect.Value {
 	// TODO: We don't use the provided rng here. Does this matter?

@@ -275,6 +275,35 @@ var _ = Describe("Wrapped field elements", func() {
 			}, nil)
 			Expect(err).To(BeNil())
 		})
+
+		It("Should correctly construct the zero element", func() {
+			err := quick.Check(func(x secp256k1.Secp256k1P) bool {
+				var z secp256k1.Secp256k1P
+				zero := secp256k1.ZeroSecp256k1P()
+				z.Set(&x)
+
+				// The defining property of the zero element is that it is the
+				// additive identity
+				z.Add(&zero)
+
+				return z.Eq(&x)
+			}, nil)
+			Expect(err).To(BeNil())
+		})
+
+		It("Should correctly construct the one element", func() {
+			err := quick.Check(func(x secp256k1.Secp256k1P) bool {
+				var z secp256k1.Secp256k1P
+				one := secp256k1.OneSecp256k1P()
+
+				// The defining property of the zero element is that it is the
+				// multiplicative identity
+				z.Mul(&x, &one)
+
+				return z.Eq(&x)
+			}, nil)
+			Expect(err).To(BeNil())
+		})
 	})
 
 	Context("When using Fn field elements", func() {
