@@ -21,13 +21,11 @@ const r1 uint64 = 0x1950b75fc4402
 const r2 uint64 = 0x1455123
 
 type Secp256k1P struct {
-	inner C.struct_secp256k1_fe
+	limbs [5]uint64
 }
 
-func NewSecp256k1P(a uint64) Secp256k1P {
-	inner := C.struct_secp256k1_fe{}
-	C.secp256k1_fe_set_int(&inner, C.uint64_t(a))
-	return Secp256k1P{inner}
+func NewSecp256k1P(x uint64) Secp256k1P {
+	return Secp256k1P{limbs: [5]uint64{x, 0, 0, 0, 0}}
 }
 
 // Secp256k1PFromInt creates a new field element from a big.Int. The big.Int is
@@ -71,7 +69,7 @@ func (x Secp256k1P) Generate(r *mrand.Rand, size int) reflect.Value {
 }
 
 func (r *Secp256k1P) Set(a *Secp256k1P) {
-	r.inner = a.inner
+	r.limbs = a.limbs
 }
 
 func (r *Secp256k1P) Int() *big.Int {
@@ -79,108 +77,108 @@ func (r *Secp256k1P) Int() *big.Int {
 }
 
 func (r *Secp256k1P) Normalize() {
-	C.secp256k1_fe_normalize(&r.inner)
+	C.secp256k1_fe_normalize((*C.secp256k1_fe)(unsafe.Pointer(r)))
 }
 
 func (r *Secp256k1P) NormalizeWeak() {
-	C.secp256k1_fe_normalize_weak(&r.inner)
+	C.secp256k1_fe_normalize_weak((*C.secp256k1_fe)(unsafe.Pointer(r)))
 }
 
 func (r *Secp256k1P) NormalizeVar() {
-	C.secp256k1_fe_normalize_var(&r.inner)
+	C.secp256k1_fe_normalize_var((*C.secp256k1_fe)(unsafe.Pointer(r)))
 }
 
 func (r *Secp256k1P) NormalizesToZero() bool {
-	return C.secp256k1_fe_normalizes_to_zero(&r.inner) != 0
+	return C.secp256k1_fe_normalizes_to_zero((*C.secp256k1_fe)(unsafe.Pointer(r))) != 0
 }
 
 func (r *Secp256k1P) NormalizesToZeroVar() bool {
-	return C.secp256k1_fe_normalizes_to_zero_var(&r.inner) != 0
+	return C.secp256k1_fe_normalizes_to_zero_var((*C.secp256k1_fe)(unsafe.Pointer(r))) != 0
 }
 
 func (r *Secp256k1P) SetUint64(a uint64) {
-	C.secp256k1_fe_set_int(&r.inner, C.uint64_t(a))
+	C.secp256k1_fe_set_int((*C.secp256k1_fe)(unsafe.Pointer(r)), C.uint64_t(a))
 }
 
 func (r *Secp256k1P) Clear() {
-	C.secp256k1_fe_clear(&r.inner)
+	C.secp256k1_fe_clear((*C.secp256k1_fe)(unsafe.Pointer(r)))
 }
 
 func (r *Secp256k1P) IsZero() bool {
-	return C.secp256k1_fe_is_zero(&r.inner) != 0
+	return C.secp256k1_fe_is_zero((*C.secp256k1_fe)(unsafe.Pointer(r))) != 0
 }
 
 func (r *Secp256k1P) IsOdd() bool {
-	return C.secp256k1_fe_is_odd(&r.inner) != 0
+	return C.secp256k1_fe_is_odd((*C.secp256k1_fe)(unsafe.Pointer(r))) != 0
 }
 
 func (r *Secp256k1P) Eq(a *Secp256k1P) bool {
-	return C.secp256k1_fe_equal(&r.inner, &a.inner) != 0
+	return C.secp256k1_fe_equal((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a))) != 0
 }
 
 func (r *Secp256k1P) EqVar(a *Secp256k1P) bool {
-	return C.secp256k1_fe_equal_var(&r.inner, &a.inner) != 0
+	return C.secp256k1_fe_equal_var((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a))) != 0
 }
 
 func (r *Secp256k1P) CmpVar(a *Secp256k1P) int {
-	return int(C.secp256k1_fe_cmp_var(&r.inner, &a.inner))
+	return int(C.secp256k1_fe_cmp_var((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a))))
 }
 
 func (r *Secp256k1P) SetB32(b []byte) {
 	cBytes := (*C.uchar)(C.CBytes(b))
-	C.secp256k1_fe_set_b32(&r.inner, cBytes)
+	C.secp256k1_fe_set_b32((*C.secp256k1_fe)(unsafe.Pointer(r)), cBytes)
 	C.free(unsafe.Pointer(cBytes))
 }
 
 func (r *Secp256k1P) GetB32() []byte {
 	cBytes := C.malloc(C.sizeof_char * 32)
-	C.secp256k1_fe_get_b32((*C.uchar)(cBytes), &r.inner)
+	C.secp256k1_fe_get_b32((*C.uchar)(cBytes), (*C.secp256k1_fe)(unsafe.Pointer(r)))
 	b := C.GoBytes(cBytes, 32)
 	C.free(unsafe.Pointer(cBytes))
 	return b
 }
 
 func (r *Secp256k1P) Neg(a *Secp256k1P, m int) {
-	C.secp256k1_fe_negate(&r.inner, &a.inner, C.int(m))
+	C.secp256k1_fe_negate((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a)), C.int(m))
 }
 
 func (r *Secp256k1P) MulInt(a int) {
-	C.secp256k1_fe_mul_int(&r.inner, C.int(a))
+	C.secp256k1_fe_mul_int((*C.secp256k1_fe)(unsafe.Pointer(r)), C.int(a))
 }
 
 func (r *Secp256k1P) Add(a *Secp256k1P) {
-	C.secp256k1_fe_add(&r.inner, &a.inner)
+	C.secp256k1_fe_add((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a)))
 }
 
 func (r *Secp256k1P) Mul(a, b *Secp256k1P) {
-	C.secp256k1_fe_mul(&r.inner, &a.inner, &b.inner)
+	C.secp256k1_fe_mul((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a)), (*C.secp256k1_fe)(unsafe.Pointer(b)))
 }
 
 func (r *Secp256k1P) Sqr(a *Secp256k1P) {
-	C.secp256k1_fe_sqr(&r.inner, &a.inner)
+	C.secp256k1_fe_sqr((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a)))
 }
 
 func (r *Secp256k1P) Sqrt(a *Secp256k1P) bool {
-	return C.secp256k1_fe_sqrt(&r.inner, &a.inner) != 0
+	return C.secp256k1_fe_sqrt((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a))) != 0
 }
 
 func (r *Secp256k1P) IsQuadVar() bool {
-	return C.secp256k1_fe_is_quad_var(&r.inner) != 0
+	return C.secp256k1_fe_is_quad_var((*C.secp256k1_fe)(unsafe.Pointer(r))) != 0
 }
 
 func (r *Secp256k1P) Inv(a *Secp256k1P) {
-	C.secp256k1_fe_inv(&r.inner, &a.inner)
+	C.secp256k1_fe_inv((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a)))
 }
 
 func (r *Secp256k1P) InvVar(a *Secp256k1P) {
-	C.secp256k1_fe_inv_var(&r.inner, &a.inner)
+	C.secp256k1_fe_inv_var((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a)))
 }
 
 func (r *Secp256k1P) Cmov(a *Secp256k1P, flag bool) {
 	if flag {
-		C.secp256k1_fe_cmov(&r.inner, &a.inner, 1)
+		C.secp256k1_fe_cmov((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a)), 1)
 	} else {
-		C.secp256k1_fe_cmov(&r.inner, &a.inner, 0)
+		C.secp256k1_fe_cmov((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a)), 0)
 	}
 }
 
