@@ -3,6 +3,7 @@ package secp256k1_test
 import (
 	"crypto/rand"
 	"math/big"
+	"testing/quick"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -97,23 +98,19 @@ var _ = Describe("Wrapped field elements", func() {
 
 	Context("When doing arithmetic in Fn", func() {
 		It("Should add correctly", func() {
-			for i := 0; i < TRIALS; i++ {
-				x, y := secp256k1.RandomSecp256k1N(), secp256k1.RandomSecp256k1N()
-				z := secp256k1.NewSecp256k1N(0)
+			quick.Check(func(x, y secp256k1.Secp256k1N) bool {
+				var z secp256k1.Secp256k1N
 				sum := big.NewInt(0).Add(x.Int(), y.Int())
 				sum.Mod(sum, N)
-
 				z.Add(&x, &y)
 				z.Normalize()
-
-				Expect(z.Int().Cmp(sum)).To(Equal(0))
-			}
+				return z.Int().Cmp(sum) == 0
+			}, nil)
 		})
 
 		It("Should negate correctly", func() {
-			for i := 0; i < TRIALS; i++ {
-				x := secp256k1.RandomSecp256k1N()
-				y := secp256k1.NewSecp256k1N(0)
+			quick.Check(func(x secp256k1.Secp256k1N) bool {
+				var y secp256k1.Secp256k1N
 				neg := x.Int()
 				neg.Mod(neg, N)
 				neg.Sub(N, neg)
@@ -121,13 +118,12 @@ var _ = Describe("Wrapped field elements", func() {
 				y.Neg(&x, 0)
 				y.Normalize()
 
-				Expect(y.Int().Cmp(neg)).To(Equal(0))
-			}
+				return y.Int().Cmp(neg) == 0
+			}, nil)
 		})
 
 		It("Should multiply correctly", func() {
-			for i := 0; i < TRIALS; i++ {
-				x, y := secp256k1.RandomSecp256k1N(), secp256k1.RandomSecp256k1N()
+			quick.Check(func(x, y secp256k1.Secp256k1N) bool {
 				z := secp256k1.NewSecp256k1N(0)
 				prod := big.NewInt(0).Mul(x.Int(), y.Int())
 				prod.Mod(prod, N)
@@ -135,21 +131,20 @@ var _ = Describe("Wrapped field elements", func() {
 				z.Mul(&x, &y)
 				z.Normalize()
 
-				Expect(z.Int().Cmp(prod)).To(Equal(0))
-			}
+				return z.Int().Cmp(prod) == 0
+			}, nil)
 		})
 
 		It("Should invert correctly", func() {
-			for i := 0; i < TRIALS; i++ {
-				x := secp256k1.RandomSecp256k1N()
-				z := secp256k1.NewSecp256k1N(0)
+			quick.Check(func(x secp256k1.Secp256k1N) bool {
+				var z secp256k1.Secp256k1N
 				inv := big.NewInt(0).ModInverse(x.Int(), N)
 
 				z.Inv(&x)
 				z.Normalize()
 
-				Expect(z.Int().Cmp(inv)).To(Equal(0))
-			}
+				return z.Int().Cmp(inv) == 0
+			}, nil)
 		})
 	})
 })

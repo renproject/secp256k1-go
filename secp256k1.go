@@ -5,18 +5,14 @@ package secp256k1
 
 #include "c-field/field_impl.h"
 #include "secp256k1n.h"
-
-void mulqq(size_t a, size_t b, size_t* dst) {
-    __int128 result = (__int128)a * (__int128)b;
-	dst[0] = (size_t)result;
-	dst[1] = result >> 64;
-}
 */
 import "C"
 import (
 	"crypto/rand"
 	"encoding/binary"
 	"math/big"
+	mrand "math/rand"
+	"reflect"
 	"unsafe"
 )
 
@@ -169,6 +165,10 @@ func OneSecp256k1N() Secp256k1N {
 	return NewSecp256k1N(1)
 }
 
+func (x *Secp256k1N) Set(y *Secp256k1N) {
+	x.limbs = y.limbs
+}
+
 // RandomSecp256k1N returns a random field element.
 func RandomSecp256k1N() Secp256k1N {
 	val := make([]byte, 40)
@@ -184,6 +184,22 @@ func RandomSecp256k1N() Secp256k1N {
 	ret.limbs[4] = binary.LittleEndian.Uint64(val[32:]) >> 16
 
 	return ret
+}
+
+func (x Secp256k1N) Generate(r *mrand.Rand, size int) reflect.Value {
+	val := make([]byte, 40)
+	_, err := r.Read(val)
+	if err != nil {
+		panic("could not generate a random byte")
+	}
+	var ret Secp256k1N
+	ret.limbs[0] = binary.LittleEndian.Uint64(val[0:]) >> 12
+	ret.limbs[1] = binary.LittleEndian.Uint64(val[8:]) >> 12
+	ret.limbs[2] = binary.LittleEndian.Uint64(val[16:]) >> 12
+	ret.limbs[3] = binary.LittleEndian.Uint64(val[24:]) >> 12
+	ret.limbs[4] = binary.LittleEndian.Uint64(val[32:]) >> 16
+
+	return reflect.ValueOf(ret)
 }
 
 // TODO: Should this reduce modulo N?
@@ -260,6 +276,10 @@ func (x *Secp256k1N) Mul(y, z *Secp256k1N) {
 	C.secp256k1n_mul((*C.secp256k1n)(unsafe.Pointer(x)), (*C.secp256k1n)(unsafe.Pointer(y)), (*C.secp256k1n)(unsafe.Pointer(z)))
 }
 
+func (x *Secp256k1N) Sqr(y *Secp256k1N) {
+	C.secp256k1n_sqr((*C.secp256k1n)(unsafe.Pointer(x)), (*C.secp256k1n)(unsafe.Pointer(y)))
+}
+
 // Inv returns a new field element that is the multiplicative inverse of the
 // given field element. If the field element is the zero element, then the
 // function will panic.
@@ -269,17 +289,28 @@ func (x *Secp256k1N) Inv(y *Secp256k1N) {
 
 // Eq returns true if the two field elements are equal, and false otherwise.
 func (x *Secp256k1N) Eq(y *Secp256k1N) bool {
-	panic("unimplemented")
+	// TODO: More efficient implementation/
+	var z Secp256k1N
+	z.Neg(x, 1)
+	z.Add(&z, y)
+	z.Normalize()
+	return (z.limbs[0] | z.limbs[1] | z.limbs[2] | z.limbs[3] | z.limbs[4]) == 0
 }
 
 // IsZero returns true if the field element is equal to the zero element
 // (additive identity), and false otherwise.
 func (x *Secp256k1N) IsZero() bool {
-	panic("unimplemented")
+	var z Secp256k1N
+	z.Set(x)
+	z.Normalize()
+	return (z.limbs[0] | z.limbs[1] | z.limbs[2] | z.limbs[3] | z.limbs[4]) == 0
 }
 
 // IsOne returns true if the field element is equal to the one element
 // (multiplicative identity), and false otherwise.
 func (x *Secp256k1N) IsOne() bool {
-	panic("unimplemented")
+	var z Secp256k1N
+	z.Set(x)
+	z.Normalize()
+	return (z.limbs[0]|z.limbs[1]|z.limbs[2]|z.limbs[3]) == 0 && z.limbs[4] == 1
 }
