@@ -30,6 +30,17 @@ func NewSecp256k1P(a uint64) Secp256k1P {
 	return Secp256k1P{inner}
 }
 
+// Secp256k1PFromInt creates a new field element from a big.Int. The big.Int is
+// truncated to 32 bytes.
+func Secp256k1PFromInt(n *big.Int) Secp256k1P {
+	var ret Secp256k1P
+	nBytes := n.Bytes()
+	var bs [32]byte
+	copy(bs[32-len(nBytes):], nBytes)
+	ret.SetB32(bs[:])
+	return ret
+}
+
 // RandomSecp256k1P returns a random field element.
 func RandomSecp256k1P() Secp256k1P {
 	val := make([]byte, 32)
@@ -182,6 +193,17 @@ type Secp256k1N struct {
 // NewSecp256k1N returns a new field element with value equal to x.
 func NewSecp256k1N(x uint64) Secp256k1N {
 	return Secp256k1N{limbs: [5]uint64{x, 0, 0, 0, 0}}
+}
+
+// Secp256k1NFromInt creates a new field element from a big.Int. The big.Int is
+// truncated to 32 bytes.
+func Secp256k1NFromInt(n *big.Int) Secp256k1N {
+	var ret Secp256k1N
+	nBytes := n.Bytes()
+	var bs [32]byte
+	copy(bs[32-len(nBytes):], nBytes)
+	ret.SetB32(bs[:])
+	return ret
 }
 
 // ZeroSecp256k1N returns the zero element (additive identity) of the field.

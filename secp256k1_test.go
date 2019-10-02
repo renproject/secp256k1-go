@@ -304,6 +304,15 @@ var _ = Describe("Wrapped field elements", func() {
 			}, nil)
 			Expect(err).To(BeNil())
 		})
+
+		It("Should convert from a big.Int correctly", func() {
+			err := quick.Check(func(b [32]byte) bool {
+				y := big.NewInt(0).SetBytes(b[:])
+				z := secp256k1.Secp256k1PFromInt(y)
+				return z.Int().Cmp(y) == 0
+			}, nil)
+			Expect(err).To(BeNil())
+		})
 	})
 
 	Context("When using Fn field elements", func() {
@@ -436,6 +445,15 @@ var _ = Describe("Wrapped field elements", func() {
 				x.GetB32(b[:])
 				y := big.NewInt(0).SetBytes(b[:])
 				return x.Int().Cmp(y) == 0
+			}, nil)
+			Expect(err).To(BeNil())
+		})
+
+		It("Should convert from a big.Int correctly", func() {
+			err := quick.Check(func(b [32]byte) bool {
+				y := big.NewInt(0).SetBytes(b[:])
+				z := secp256k1.Secp256k1NFromInt(y)
+				return z.Int().Cmp(y) == 0
 			}, nil)
 			Expect(err).To(BeNil())
 		})
