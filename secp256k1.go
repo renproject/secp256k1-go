@@ -94,11 +94,11 @@ func (r *Secp256k1P) IsOdd() bool {
 	return C.secp256k1_fe_is_odd(&r.inner) != 0
 }
 
-func (r *Secp256k1P) Equal(a *Secp256k1P) bool {
+func (r *Secp256k1P) Eq(a *Secp256k1P) bool {
 	return C.secp256k1_fe_equal(&r.inner, &a.inner) != 0
 }
 
-func (r *Secp256k1P) EqualVar(a *Secp256k1P) bool {
+func (r *Secp256k1P) EqVar(a *Secp256k1P) bool {
 	return C.secp256k1_fe_equal_var(&r.inner, &a.inner) != 0
 }
 
@@ -120,7 +120,7 @@ func (r *Secp256k1P) GetB32() []byte {
 	return b
 }
 
-func (r *Secp256k1P) Negate(a *Secp256k1P, m int) {
+func (r *Secp256k1P) Neg(a *Secp256k1P, m int) {
 	C.secp256k1_fe_negate(&r.inner, &a.inner, C.int(m))
 }
 
@@ -335,5 +335,5 @@ func (x *Secp256k1N) IsOne() bool {
 	var z Secp256k1N
 	z.Set(x)
 	z.Normalize()
-	return (z.limbs[0]|z.limbs[1]|z.limbs[2]|z.limbs[3]) == 0 && z.limbs[4] == 1
+	return z.limbs[0] == 1 && (z.limbs[1]|z.limbs[2]|z.limbs[3]|z.limbs[4]) == 0
 }
