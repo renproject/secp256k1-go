@@ -30,11 +30,31 @@ func NewSecp256k1P(a uint64) Secp256k1P {
 	return Secp256k1P{inner}
 }
 
+// RandomSecp256k1P returns a random field element.
+func RandomSecp256k1P() Secp256k1P {
+	val := make([]byte, 32)
+	_, err := rand.Read(val)
+	if err != nil {
+		panic("could not generate a random byte")
+	}
+	ret := NewSecp256k1P(0)
+	ret.SetB32(val)
+
+	return ret
+}
+
+// Generate implements the quick.Generator interface.
+func (x Secp256k1P) Generate(r *mrand.Rand, size int) reflect.Value {
+	// TODO: We don't use the provided rng here. Does this matter?
+	ret := RandomSecp256k1P()
+	return reflect.ValueOf(ret)
+}
+
 func (r *Secp256k1P) Set(a *Secp256k1P) {
 	r.inner = a.inner
 }
 
-func (r *Secp256k1P) BigInt() *big.Int {
+func (r *Secp256k1P) Int() *big.Int {
 	return big.NewInt(0).SetBytes(r.GetB32())
 }
 
