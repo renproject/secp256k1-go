@@ -225,14 +225,51 @@ func (x *Secp256k1N) Int() *big.Int {
 	return ret
 }
 
-// SetB32 sets the value of x to be the given bytes. It is assumed that the
-// byte slice has at least 32 elements, otherwise it will panic.
+// SetB32 sets the value of x to be the given big endian bytes. It is assumed
+// that the byte slice has at least 32 elements, otherwise it will panic.
 func (x *Secp256k1N) SetB32(a []byte) {
 	x.limbs[0] = uint64(a[31]) | (uint64(a[30]) << 8) | (uint64(a[29]) << 16) | (uint64(a[28]) << 24) | (uint64(a[27]) << 32) | (uint64(a[26]) << 40) | (uint64(a[25]&0xF) << 48)
 	x.limbs[1] = uint64((a[25]>>4)&0xF) | (uint64(a[24]) << 4) | (uint64(a[23]) << 12) | (uint64(a[22]) << 20) | (uint64(a[21]) << 28) | (uint64(a[20]) << 36) | (uint64(a[19]) << 44)
 	x.limbs[2] = uint64(a[18]) | (uint64(a[17]) << 8) | (uint64(a[16]) << 16) | (uint64(a[15]) << 24) | (uint64(a[14]) << 32) | (uint64(a[13]) << 40) | (uint64(a[12]&0xF) << 48)
 	x.limbs[3] = uint64((a[12]>>4)&0xF) | (uint64(a[11]) << 4) | (uint64(a[10]) << 12) | (uint64(a[9]) << 20) | (uint64(a[8]) << 28) | (uint64(a[7]) << 36) | (uint64(a[6]) << 44)
 	x.limbs[4] = uint64(a[5]) | (uint64(a[4]) << 8) | (uint64(a[3]) << 16) | (uint64(a[2]) << 24) | (uint64(a[1]) << 32) | (uint64(a[0]) << 40)
+}
+
+// GetB32 writes the big endian bytes of x to the given slice a. It is assumed
+// that the byte slice has length at least 32, otherwise it will panic.
+func (x *Secp256k1N) GetB32(a []byte) {
+	a[0] = byte((x.limbs[4] >> 40) & 0xFF)
+	a[1] = byte((x.limbs[4] >> 32) & 0xFF)
+	a[2] = byte((x.limbs[4] >> 24) & 0xFF)
+	a[3] = byte((x.limbs[4] >> 16) & 0xFF)
+	a[4] = byte((x.limbs[4] >> 8) & 0xFF)
+	a[5] = byte(x.limbs[4] & 0xFF)
+	a[6] = byte((x.limbs[3] >> 44) & 0xFF)
+	a[7] = byte((x.limbs[3] >> 36) & 0xFF)
+	a[8] = byte((x.limbs[3] >> 28) & 0xFF)
+	a[9] = byte((x.limbs[3] >> 20) & 0xFF)
+	a[10] = byte((x.limbs[3] >> 12) & 0xFF)
+	a[11] = byte((x.limbs[3] >> 4) & 0xFF)
+	a[12] = byte(((x.limbs[2] >> 48) & 0xF) | ((x.limbs[3] & 0xF) << 4))
+	a[13] = byte((x.limbs[2] >> 40) & 0xFF)
+	a[14] = byte((x.limbs[2] >> 32) & 0xFF)
+	a[15] = byte((x.limbs[2] >> 24) & 0xFF)
+	a[16] = byte((x.limbs[2] >> 16) & 0xFF)
+	a[17] = byte((x.limbs[2] >> 8) & 0xFF)
+	a[18] = byte(x.limbs[2] & 0xFF)
+	a[19] = byte((x.limbs[1] >> 44) & 0xFF)
+	a[20] = byte((x.limbs[1] >> 36) & 0xFF)
+	a[21] = byte((x.limbs[1] >> 28) & 0xFF)
+	a[22] = byte((x.limbs[1] >> 20) & 0xFF)
+	a[23] = byte((x.limbs[1] >> 12) & 0xFF)
+	a[24] = byte((x.limbs[1] >> 4) & 0xFF)
+	a[25] = byte(((x.limbs[0] >> 48) & 0xF) | ((x.limbs[1] & 0xF) << 4))
+	a[26] = byte((x.limbs[0] >> 40) & 0xFF)
+	a[27] = byte((x.limbs[0] >> 32) & 0xFF)
+	a[28] = byte((x.limbs[0] >> 24) & 0xFF)
+	a[29] = byte((x.limbs[0] >> 16) & 0xFF)
+	a[30] = byte((x.limbs[0] >> 8) & 0xFF)
+	a[31] = byte(x.limbs[0] & 0xFF)
 }
 
 // Normalize reduces the limbed representation of x so that it is less than the

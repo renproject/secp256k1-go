@@ -400,5 +400,15 @@ var _ = Describe("Wrapped field elements", func() {
 			}, nil)
 			Expect(err).To(BeNil())
 		})
+
+		It("Should return the bytes for a value correctly", func() {
+			var b [32]byte
+			err := quick.Check(func(x secp256k1.Secp256k1N) bool {
+				x.GetB32(b[:])
+				y := big.NewInt(0).SetBytes(b[:])
+				return x.Int().Cmp(y) == 0
+			}, nil)
+			Expect(err).To(BeNil())
+		})
 	})
 })
