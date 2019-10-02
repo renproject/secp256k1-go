@@ -225,6 +225,16 @@ func (x *Secp256k1N) Int() *big.Int {
 	return ret
 }
 
+// SetB32 sets the value of x to be the given bytes. It is assumed that the
+// byte slice has at least 32 elements, otherwise it will panic.
+func (x *Secp256k1N) SetB32(a []byte) {
+	x.limbs[0] = uint64(a[31]) | (uint64(a[30]) << 8) | (uint64(a[29]) << 16) | (uint64(a[28]) << 24) | (uint64(a[27]) << 32) | (uint64(a[26]) << 40) | (uint64(a[25]&0xF) << 48)
+	x.limbs[1] = uint64((a[25]>>4)&0xF) | (uint64(a[24]) << 4) | (uint64(a[23]) << 12) | (uint64(a[22]) << 20) | (uint64(a[21]) << 28) | (uint64(a[20]) << 36) | (uint64(a[19]) << 44)
+	x.limbs[2] = uint64(a[18]) | (uint64(a[17]) << 8) | (uint64(a[16]) << 16) | (uint64(a[15]) << 24) | (uint64(a[14]) << 32) | (uint64(a[13]) << 40) | (uint64(a[12]&0xF) << 48)
+	x.limbs[3] = uint64((a[12]>>4)&0xF) | (uint64(a[11]) << 4) | (uint64(a[10]) << 12) | (uint64(a[9]) << 20) | (uint64(a[8]) << 28) | (uint64(a[7]) << 36) | (uint64(a[6]) << 44)
+	x.limbs[4] = uint64(a[5]) | (uint64(a[4]) << 8) | (uint64(a[3]) << 16) | (uint64(a[2]) << 24) | (uint64(a[1]) << 32) | (uint64(a[0]) << 40)
+}
+
 // Normalize reduces the limbed representation of x so that it is less than the
 // prime and all of the limbs are in valid base 52 ranges.
 func (x *Secp256k1N) Normalize() {
@@ -244,7 +254,7 @@ func (x *Secp256k1N) Normalize() {
 	t3 &= 0xfffffffffffff
 
 	// TODO: Double check the logic here.
-	if t4>>48 != 0 || ((t4 == 0xffffffffffff) && (t3 == 0xfffffffffffff) && (t2 > r2 || (t2 == r2 && (t1 > r1 || (t1 == r1 && r0 >= r0))))) {
+	if t4>>48 != 0 || ((t4 == 0xffffffffffff) && (t3 == 0xfffffffffffff) && (t2 > r2 || (t2 == r2 && (t1 > r1 || (t1 == r1 && t0 >= r0))))) {
 		t0 += r0
 		t1 += r1 + t0>>52
 		t0 &= 0xfffffffffffff

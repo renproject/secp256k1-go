@@ -277,7 +277,7 @@ var _ = Describe("Wrapped field elements", func() {
 		})
 	})
 
-	Context("When doing arithmetic in Fn", func() {
+	Context("When using Fn field elements", func() {
 		It("Should add correctly", func() {
 			err := quick.Check(func(x, y secp256k1.Secp256k1N) bool {
 				var z secp256k1.Secp256k1N
@@ -387,6 +387,16 @@ var _ = Describe("Wrapped field elements", func() {
 			err := quick.Check(func(x secp256k1.Secp256k1N) bool {
 				z := secp256k1.OneSecp256k1N()
 				return z.IsOne()
+			}, nil)
+			Expect(err).To(BeNil())
+		})
+
+		It("Should set a value from bytes correctly", func() {
+			err := quick.Check(func(b [32]byte) bool {
+				var z secp256k1.Secp256k1N
+				y := big.NewInt(0).SetBytes(b[:])
+				z.SetB32(b[:])
+				return z.Int().Cmp(y) == 0
 			}, nil)
 			Expect(err).To(BeNil())
 		})
