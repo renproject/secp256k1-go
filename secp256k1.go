@@ -33,10 +33,8 @@ func NewSecp256k1P(a uint64) Secp256k1P {
 // RandomSecp256k1P returns a random field element.
 func RandomSecp256k1P() Secp256k1P {
 	val := make([]byte, 32)
-	_, err := rand.Read(val)
-	if err != nil {
-		panic("could not generate a random byte")
-	}
+	// Always returns nil error
+	rand.Read(val)
 	ret := NewSecp256k1P(0)
 	ret.SetB32(val)
 
@@ -194,10 +192,8 @@ func (x *Secp256k1N) Set(y *Secp256k1N) {
 // RandomSecp256k1N returns a random field element.
 func RandomSecp256k1N() Secp256k1N {
 	val := make([]byte, 40)
-	_, err := rand.Read(val)
-	if err != nil {
-		panic("could not generate a random byte")
-	}
+	// Always returns nil error
+	rand.Read(val)
 	ret := NewSecp256k1N(0)
 	ret.limbs[0] = binary.LittleEndian.Uint64(val[0:]) >> 12
 	ret.limbs[1] = binary.LittleEndian.Uint64(val[8:]) >> 12
