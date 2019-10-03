@@ -333,7 +333,7 @@ func (x *Secp256k1N) Normalize() {
 	t0, t1, t2, t3, t4 := x.limbs[0], x.limbs[1], x.limbs[2], x.limbs[3], x.limbs[4]
 
 	y := t4 >> 48
-	t4 &= 0xffffffffffff
+	t4 &= 0x0ffffffffffff
 
 	t0 += y * r0
 	t1 += y*r1 + t0>>52
@@ -346,7 +346,7 @@ func (x *Secp256k1N) Normalize() {
 	t3 &= 0xfffffffffffff
 
 	// TODO: Double check the logic here.
-	if t4>>48 != 0 || ((t4 == 0xffffffffffff) && (t3 == 0xfffffffffffff) && (t2 > r2 || (t2 == r2 && (t1 > r1 || (t1 == r1 && t0 >= r0))))) {
+	if t4>>48 != 0 || ((t4 == 0x0ffffffffffff) && (t3 == 0xfffffffffffff) && (t2 > 0xffffffebaaedc || (t2 == 0xffffffebaaedc && (t1 > 0xe6af48a03bbfd || (t1 == 0xe6af48a03bbfd && t0 >= 0x25e8cd0364141))))) {
 		t0 += r0
 		t1 += r1 + t0>>52
 		t0 &= 0xfffffffffffff
@@ -357,7 +357,7 @@ func (x *Secp256k1N) Normalize() {
 		t4 += t3 >> 52
 		t3 &= 0xfffffffffffff
 
-		t4 &= 0xffffffffffff
+		t4 &= 0x0ffffffffffff
 	}
 
 	x.limbs[0] = t0

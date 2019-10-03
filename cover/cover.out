@@ -49,9 +49,9 @@ github.com/renproject/secp256k1-go/secp256k1.go:269.25,272.3 2 1
 github.com/renproject/secp256k1-go/secp256k1.go:279.39,285.2 5 1
 github.com/renproject/secp256k1-go/secp256k1.go:289.39,322.2 32 1
 github.com/renproject/secp256k1-go/secp256k1.go:326.38,328.2 1 1
-github.com/renproject/secp256k1-go/secp256k1.go:332.34,349.138 13 1
+github.com/renproject/secp256k1-go/secp256k1.go:332.34,349.204 13 1
 github.com/renproject/secp256k1-go/secp256k1.go:363.2,367.17 5 1
-github.com/renproject/secp256k1-go/secp256k1.go:349.138,361.3 10 1
+github.com/renproject/secp256k1-go/secp256k1.go:349.204,361.3 10 1
 github.com/renproject/secp256k1-go/secp256k1.go:371.44,377.2 5 1
 github.com/renproject/secp256k1-go/secp256k1.go:382.49,388.2 5 1
 github.com/renproject/secp256k1-go/secp256k1.go:396.44,398.2 1 1

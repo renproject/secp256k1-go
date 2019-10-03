@@ -355,6 +355,27 @@ var _ = Describe("Wrapped field elements", func() {
 	})
 
 	Context("When using Fn field elements", func() {
+		It("Should normalise correctly", func() {
+			err := quick.Check(func(x secp256k1.Secp256k1N) bool {
+				// Make sure normalisation won't be trivial
+				x.MulInt(10)
+
+				var z secp256k1.Secp256k1N
+				z.Set(&x)
+				z.Normalize()
+
+				return z.Eq(&x)
+			}, nil)
+			Expect(err).To(BeNil())
+
+			y := secp256k1.Secp256k1NFromInt(big.NewInt(0).Sub(N, big.NewInt(1)))
+			var z secp256k1.Secp256k1N
+			z.Set(&y)
+			z.Normalize()
+
+			Expect(y.Int().Cmp(z.Int())).To(Equal(0))
+		})
+
 		It("Should add correctly", func() {
 			err := quick.Check(func(x, y secp256k1.Secp256k1N) bool {
 				var z secp256k1.Secp256k1N
