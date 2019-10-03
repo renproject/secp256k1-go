@@ -61,6 +61,13 @@ func OneSecp256k1P() Secp256k1P {
 	return NewSecp256k1P(1)
 }
 
+// Cast converts sets x (P field) to have the value of y (N field). Note that
+// if x is desired to have the same numerical value of y then y needs to be
+// normalised first.
+func (x *Secp256k1P) Cast(y *Secp256k1N) {
+	x.limbs = y.limbs
+}
+
 // Generate implements the quick.Generator interface.
 func (x Secp256k1P) Generate(r *mrand.Rand, size int) reflect.Value {
 	// TODO: We don't use the provided rng here. Does this matter?
@@ -217,6 +224,13 @@ func OneSecp256k1N() Secp256k1N {
 
 // Set copies the value of y into x.
 func (x *Secp256k1N) Set(y *Secp256k1N) {
+	x.limbs = y.limbs
+}
+
+// Cast converts sets x (N field) to have the value of y (P field). Note that
+// if x is desired to have the same numerical value of y (possibly modulo N)
+// then y needs to be normalised first.
+func (x *Secp256k1N) Cast(y *Secp256k1P) {
 	x.limbs = y.limbs
 }
 

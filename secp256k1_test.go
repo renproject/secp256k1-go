@@ -92,6 +92,23 @@ var _ = Describe("Wrapped field elements", func() {
 			Expect(err).To(BeNil())
 		})
 
+		It("Should cast from the N field correctly", func() {
+			err := quick.Check(func(b [32]byte) bool {
+				n := big.NewInt(0).SetBytes(b[:])
+				n.Mod(n, P)
+				copy(b[32-len(n.Bytes()):], n.Bytes())
+
+				var x, yCast secp256k1.Secp256k1P
+				var y secp256k1.Secp256k1N
+				x.SetB32(b[:])
+				y.SetB32(b[:])
+				yCast.Cast(&y)
+
+				return x.Eq(&yCast)
+			}, nil)
+			Expect(err).To(BeNil())
+		})
+
 		It("Should clear correctly", func() {
 			err := quick.Check(func(x secp256k1.Secp256k1P) bool {
 				x.Clear()
@@ -427,6 +444,34 @@ var _ = Describe("Wrapped field elements", func() {
 				return z.IsOne()
 			}, nil)
 			Expect(err).To(BeNil())
+		})
+
+		It("Should cast from the P field correctly", func() {
+			err := quick.Check(func(b [32]byte) bool {
+				n := big.NewInt(0).SetBytes(b[:])
+				n.Mod(n, P)
+				copy(b[32-len(n.Bytes()):], n.Bytes())
+
+				var x, yCast secp256k1.Secp256k1N
+				var y secp256k1.Secp256k1P
+				x.SetB32(b[:])
+				y.SetB32(b[:])
+				yCast.Cast(&y)
+
+				return x.Eq(&yCast)
+			}, nil)
+			Expect(err).To(BeNil())
+
+			// Test a case where modulo reduction would happen
+			n := big.NewInt(0).Sub(P, big.NewInt(10))
+
+			var x, yCast secp256k1.Secp256k1N
+			var y secp256k1.Secp256k1P
+			x.SetB32(n.Bytes())
+			y.SetB32(n.Bytes())
+			yCast.Cast(&y)
+
+			Expect(x.Eq(&yCast)).To(BeTrue())
 		})
 
 		It("Should set a value from bytes correctly", func() {
