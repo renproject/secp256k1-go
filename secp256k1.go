@@ -427,6 +427,15 @@ func (x *Secp256k1N) Eq(y *Secp256k1N) bool {
 	return (z.limbs[0] | z.limbs[1] | z.limbs[2] | z.limbs[3] | z.limbs[4]) == 0
 }
 
+// Clear sets the value of x to zero by setting all of the limbs to zero.
+func (x *Secp256k1N) Clear() {
+	x.limbs[0] = 0
+	x.limbs[1] = 0
+	x.limbs[2] = 0
+	x.limbs[3] = 0
+	x.limbs[4] = 0
+}
+
 // IsZero returns true if the field element is equal to the zero element
 // (additive identity), and false otherwise.
 func (x *Secp256k1N) IsZero() bool {

@@ -119,10 +119,15 @@ var _ = Describe("Wrapped field elements", func() {
 		})
 
 		It("Should check that a field element is zero correctly", func() {
-			err := quick.Check(func(x secp256k1.Secp256k1P) bool {
-				x.Clear()
+			err := quick.Check(func(x secp256k1.Secp256k1P, flag bool) bool {
+				if flag {
+					x.Clear()
+					return x.IsZero()
+				}
 
-				return x.IsZero()
+				// This can produce a false negative only with a negligible
+				// probability
+				return !x.IsZero()
 			}, nil)
 			Expect(err).To(BeNil())
 		})
@@ -443,6 +448,29 @@ var _ = Describe("Wrapped field elements", func() {
 				z.Mul(&x, &one)
 
 				return z.Eq(&x)
+			}, nil)
+			Expect(err).To(BeNil())
+		})
+
+		It("Should check that a field element is zero correctly", func() {
+			err := quick.Check(func(x secp256k1.Secp256k1N, flag bool) bool {
+				if flag {
+					x.Clear()
+					return x.IsZero()
+				}
+
+				// This can produce a false negative only with a negligible
+				// probability
+				return !x.IsZero()
+			}, nil)
+			Expect(err).To(BeNil())
+		})
+
+		It("Should clear correctly", func() {
+			err := quick.Check(func(x secp256k1.Secp256k1N) bool {
+				x.Clear()
+
+				return x.IsZero()
 			}, nil)
 			Expect(err).To(BeNil())
 		})
