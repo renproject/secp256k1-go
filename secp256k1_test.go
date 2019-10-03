@@ -502,5 +502,12 @@ var _ = Describe("Wrapped field elements", func() {
 			}, nil)
 			Expect(err).To(BeNil())
 		})
+
+		It("Should correctly identify odd elements", func() {
+			err := quick.Check(func(x secp256k1.Secp256k1N) bool {
+				return (x.Int().Uint64()%2 == 1) == x.IsOdd()
+			}, nil)
+			Expect(err).To(BeNil())
+		})
 	})
 })

@@ -425,3 +425,9 @@ func (x *Secp256k1N) IsOne() bool {
 	z.Normalize()
 	return z.limbs[0] == 1 && (z.limbs[1]|z.limbs[2]|z.limbs[3]|z.limbs[4]) == 0
 }
+
+// IsOdd returns true if x is odd. Note that to ensure that this is the parity
+// of the underlying field element, x should be normalised.
+func (x *Secp256k1N) IsOdd() bool {
+	return x.limbs[0]&1 == 1
+}
