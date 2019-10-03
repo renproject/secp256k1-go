@@ -145,6 +145,10 @@ func (r *Secp256k1P) GetB32() []byte {
 	return b
 }
 
+func (r *Secp256k1P) Uint64() uint64 {
+	return r.limbs[0] + (r.limbs[1]&0xfff)<<52
+}
+
 func (r *Secp256k1P) Neg(a *Secp256k1P, m int) {
 	C.secp256k1_fe_negate((*C.secp256k1_fe)(unsafe.Pointer(r)), (*C.secp256k1_fe)(unsafe.Pointer(a)), C.int(m))
 }
@@ -317,6 +321,12 @@ func (x *Secp256k1N) GetB32(a []byte) {
 	a[31] = byte(x.limbs[0] & 0xFF)
 }
 
+// Uint64 returns x truncated to 64 bits. Note that this will only return
+// actual value of x if it is normalised.
+func (x *Secp256k1N) Uint64() uint64 {
+	return x.limbs[0] + (x.limbs[1]&0xfff)<<52
+}
+
 // Normalize reduces the limbed representation of x so that it is less than the
 // prime and all of the limbs are in valid base 52 ranges.
 func (x *Secp256k1N) Normalize() {
@@ -396,6 +406,15 @@ func (x *Secp256k1N) Sqr(y *Secp256k1N) {
 // equal to the zero element, then the result will also be the zero element.
 func (x *Secp256k1N) Inv(y *Secp256k1N) {
 	C.secp256k1n_inv((*C.secp256k1n)(unsafe.Pointer(x)), (*C.secp256k1n)(unsafe.Pointer(y)))
+}
+
+// MulInt multiplies x by a small int value
+func (x *Secp256k1N) MulInt(a int) {
+	x.limbs[0] *= uint64(a)
+	x.limbs[1] *= uint64(a)
+	x.limbs[2] *= uint64(a)
+	x.limbs[3] *= uint64(a)
+	x.limbs[4] *= uint64(a)
 }
 
 // Eq returns true if the two field elements are equal, and false otherwise.

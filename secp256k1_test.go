@@ -330,6 +330,23 @@ var _ = Describe("Wrapped field elements", func() {
 			}, nil)
 			Expect(err).To(BeNil())
 		})
+
+		It("Should correctly convert to a uint64", func() {
+			err := quick.Check(func(b [32]byte) bool {
+				y := big.NewInt(0).SetBytes(b[:])
+				var z secp256k1.Secp256k1P
+				z.SetB32(b[:])
+
+				// Try to force an un-normalised representation
+				z.MulInt(10)
+				z.Normalize()
+				y.Mul(y, big.NewInt(10))
+				y.Mod(y, P)
+
+				return z.Uint64() == y.Uint64()
+			}, nil)
+			Expect(err).To(BeNil())
+		})
 	})
 
 	Context("When using Fn field elements", func() {
@@ -506,6 +523,23 @@ var _ = Describe("Wrapped field elements", func() {
 		It("Should correctly identify odd elements", func() {
 			err := quick.Check(func(x secp256k1.Secp256k1N) bool {
 				return (x.Int().Uint64()%2 == 1) == x.IsOdd()
+			}, nil)
+			Expect(err).To(BeNil())
+		})
+
+		It("Should correctly convert to a uint64", func() {
+			err := quick.Check(func(b [32]byte) bool {
+				y := big.NewInt(0).SetBytes(b[:])
+				var z secp256k1.Secp256k1N
+				z.SetB32(b[:])
+
+				// Try to force an un-normalised representation
+				z.MulInt(10)
+				z.Normalize()
+				y.Mul(y, big.NewInt(10))
+				y.Mod(y, N)
+
+				return z.Uint64() == y.Uint64()
 			}, nil)
 			Expect(err).To(BeNil())
 		})
