@@ -1,0 +1,6 @@
+goos: linux
+goarch: amd64
+pkg: github.com/renproject/secp256k1-go
+BenchmarkMulN-12    	 7451941	       176 ns/op
+PASS
+ok  	github.com/renproject/secp256k1-go	1.478s

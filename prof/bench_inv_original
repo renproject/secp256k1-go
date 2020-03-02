@@ -1,0 +1,6 @@
+goos: linux
+goarch: amd64
+pkg: github.com/renproject/rzl/algebra/field
+BenchmarkSecp256k1NInv-12    	  188361	      6358 ns/op
+PASS
+ok  	github.com/renproject/rzl/algebra/field	1.267s

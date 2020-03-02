@@ -1,0 +1,6 @@
+goos: linux
+goarch: amd64
+pkg: github.com/republicprotocol/secp256k1-go
+BenchmarkAddN-12    	 3461239	       314 ns/op
+PASS
+ok  	github.com/republicprotocol/secp256k1-go	1.444s
