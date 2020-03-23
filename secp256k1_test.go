@@ -223,9 +223,8 @@ var _ = Describe("Wrapped field elements", func() {
 				z.Cmov(&x, flag)
 				if flag {
 					return z.Eq(&x)
-				} else {
-					return z.IsZero()
 				}
+				return z.IsZero()
 			}, nil)
 			Expect(err).To(BeNil())
 		})
@@ -395,7 +394,7 @@ var _ = Describe("Wrapped field elements", func() {
 				neg.Mod(neg, N)
 				neg.Sub(N, neg)
 
-				y.Neg(&x, 0)
+				y.Neg(&x, 1)
 				y.Normalize()
 
 				return y.Int().Cmp(neg) == 0
