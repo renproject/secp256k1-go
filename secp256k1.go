@@ -260,16 +260,17 @@ func (x Secp256k1N) Generate(r *mrand.Rand, size int) reflect.Value {
 	return reflect.ValueOf(ret)
 }
 
-// Int returns a big.Int that has the same value that x represents.
-// NOTE: Currently this does not reduce modulo N.
-// TODO: Should it?
+// Int returns a big.Int that has the same value that x represents (reduced
+// modulo N).
 func (x *Secp256k1N) Int() *big.Int {
 	ret := big.NewInt(0)
+	n, _ := big.NewInt(0).SetString("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16)
 
 	for i := range x.limbs {
 		ret.Lsh(ret, 52)
 		ret.Add(ret, big.NewInt(0).SetUint64(x.limbs[4-i]))
 	}
+	ret.Mod(ret, n)
 
 	return ret
 }
@@ -329,6 +330,8 @@ func (x *Secp256k1N) Uint64() uint64 {
 
 // Normalize reduces the limbed representation of x so that it is less than the
 // prime and all of the limbs are in valid base 52 ranges.
+//
+// The magnitude of the caller should be no more than 2048.
 func (x *Secp256k1N) Normalize() {
 	t0, t1, t2, t3, t4 := x.limbs[0], x.limbs[1], x.limbs[2], x.limbs[3], x.limbs[4]
 
@@ -345,7 +348,6 @@ func (x *Secp256k1N) Normalize() {
 	t4 += t3 >> 52
 	t3 &= 0xfffffffffffff
 
-	// TODO: Double check the logic here.
 	if t4>>48 != 0 || ((t4 == 0x0ffffffffffff) && (t3 == 0xfffffffffffff) && (t2 > 0xffffffebaaedc || (t2 == 0xffffffebaaedc && (t1 > 0xe6af48a03bbfd || (t1 == 0xe6af48a03bbfd && t0 >= 0x25e8cd0364141))))) {
 		t0 += r0
 		t1 += r1 + t0>>52
@@ -368,6 +370,9 @@ func (x *Secp256k1N) Normalize() {
 }
 
 // Add computes the field addition of y and z and stores it in x.
+//
+// The output will have magnitude equal to the sum of the magnitudes of the
+// input values.
 func (x *Secp256k1N) Add(y, z *Secp256k1N) {
 	x.limbs[0] = y.limbs[0] + z.limbs[0]
 	x.limbs[1] = y.limbs[1] + z.limbs[1]
@@ -377,14 +382,18 @@ func (x *Secp256k1N) Add(y, z *Secp256k1N) {
 }
 
 // Neg computes the additive inverse of y and stores it in x. The second
-// argument, m, is the magnitude of y - if y has been normalised that m = 1 is
-// sufficient, otherwise a larger value may be needed for a correct result.
+// argument is the magnitude of y.
+//
+// The output will have magnitude equal to 7m.
 func (x *Secp256k1N) Neg(y *Secp256k1N, m uint) {
-	x.limbs[0] = 0x25e8cd0364141*2*(uint64(m)+1) - y.limbs[0]
-	x.limbs[1] = 0xe6af48a03bbfd*2*(uint64(m)+1) - y.limbs[1]
-	x.limbs[2] = 0xffffffebaaedc*2*(uint64(m)+1) - y.limbs[2]
-	x.limbs[3] = 0xfffffffffffff*2*(uint64(m)+1) - y.limbs[3]
-	x.limbs[4] = 0x0ffffffffffff*2*(uint64(m)+1) - y.limbs[4]
+	// 7 is the smallest number k such that
+	// 		0x25e8cd0364141 * k > 2^52
+	// and so this choice allows us to avoid underflow for a normalised input
+	x.limbs[0] = 0x25e8cd0364141*7*uint64(m) - y.limbs[0]
+	x.limbs[1] = 0xe6af48a03bbfd*7*uint64(m) - y.limbs[1]
+	x.limbs[2] = 0xffffffebaaedc*7*uint64(m) - y.limbs[2]
+	x.limbs[3] = 0xfffffffffffff*7*uint64(m) - y.limbs[3]
+	x.limbs[4] = 0x0ffffffffffff*7*uint64(m) - y.limbs[4]
 }
 
 // Mul Performs the field multiplication of y and z and stores it in x.
