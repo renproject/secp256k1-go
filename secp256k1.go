@@ -41,11 +41,11 @@ func Secp256k1PFromInt(n *big.Int) Secp256k1P {
 
 // RandomSecp256k1P returns a random field element.
 func RandomSecp256k1P() Secp256k1P {
-	val := make([]byte, 32)
+	val := [32]byte{}
 	// Always returns nil error
-	rand.Read(val)
+	rand.Read(val[:])
 	ret := NewSecp256k1P(0)
-	ret.SetB32(val)
+	ret.SetB32(val[:])
 
 	return ret
 }
@@ -240,9 +240,9 @@ func (x *Secp256k1N) Cast(y *Secp256k1P) {
 
 // RandomSecp256k1N returns a random field element.
 func RandomSecp256k1N() Secp256k1N {
-	val := make([]byte, 40)
+	val := [40]byte{}
 	// Always returns nil error
-	rand.Read(val)
+	rand.Read(val[:])
 	ret := NewSecp256k1N(0)
 	ret.limbs[0] = binary.LittleEndian.Uint64(val[0:]) >> 12
 	ret.limbs[1] = binary.LittleEndian.Uint64(val[8:]) >> 12
@@ -429,11 +429,14 @@ func (x *Secp256k1N) MulInt(a int) {
 // Eq returns true if the two field elements are equal, and false otherwise.
 func (x *Secp256k1N) Eq(y *Secp256k1N) bool {
 	// TODO: More efficient implementation/
-	var z Secp256k1N
-	z.Neg(x, 1)
-	z.Add(&z, y)
-	z.Normalize()
-	return (z.limbs[0] | z.limbs[1] | z.limbs[2] | z.limbs[3] | z.limbs[4]) == 0
+	var xNorm, yNorm = *x, *y
+	xNorm.Normalize()
+	yNorm.Normalize()
+	return xNorm.limbs[0] == yNorm.limbs[0] &&
+		xNorm.limbs[1] == yNorm.limbs[1] &&
+		xNorm.limbs[2] == yNorm.limbs[2] &&
+		xNorm.limbs[3] == yNorm.limbs[3] &&
+		xNorm.limbs[4] == yNorm.limbs[4]
 }
 
 // Clear sets the value of x to zero by setting all of the limbs to zero.
