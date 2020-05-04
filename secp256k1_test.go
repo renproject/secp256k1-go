@@ -1,7 +1,9 @@
 package secp256k1_test
 
 import (
+	"bytes"
 	"math/big"
+	"math/rand"
 	"testing/quick"
 
 	. "github.com/onsi/ginkgo"
@@ -590,6 +592,59 @@ var _ = Describe("Wrapped field elements", func() {
 				return z.Uint64() == y.Uint64()
 			}, nil)
 			Expect(err).To(BeNil())
+		})
+	})
+
+	//
+	// Marshalling
+	//
+
+	Context("Marshalling elements in Fn", func() {
+		trials := 1000
+
+		var a, b secp256k1.Secp256k1N
+		var bs [32]byte
+
+		buf := bytes.NewBuffer(bs[:0])
+
+		It("should be the same after marshalling and unmarshalling", func() {
+			for i := 0; i < trials; i++ {
+				buf.Reset()
+				a = secp256k1.RandomSecp256k1N()
+
+				m, err := a.Marshal(buf, 32)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(m).To(Equal(0))
+
+				m, err = b.Unmarshal(buf, 32)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(m).To(Equal(0))
+
+				Expect(a.Eq(&b)).To(BeTrue())
+			}
+		})
+
+		It("should return an error if the max bytes are exceeded when marshalling", func() {
+			for i := 0; i < trials; i++ {
+				buf.Reset()
+				a = secp256k1.RandomSecp256k1N()
+				max := rand.Intn(32)
+
+				m, err := a.Marshal(buf, max)
+				Expect(err).To(HaveOccurred())
+				Expect(m).To(Equal(max))
+			}
+		})
+
+		It("should return an error if the max bytes are exceeded when unmarshalling", func() {
+			for i := 0; i < trials; i++ {
+				buf.Reset()
+				max := rand.Intn(32)
+
+				m, err := a.Unmarshal(buf, max)
+				Expect(err).To(HaveOccurred())
+				Expect(m).To(Equal(max))
+			}
 		})
 	})
 })

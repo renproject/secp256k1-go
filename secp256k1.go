@@ -10,10 +10,13 @@ import "C"
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"io"
 	"math/big"
 	mrand "math/rand"
 	"reflect"
 	"unsafe"
+
+	"github.com/renproject/surge"
 )
 
 const r0 uint64 = 0xda1732fc9bebf
@@ -320,6 +323,35 @@ func (x *Secp256k1N) GetB32(a []byte) {
 	a[29] = byte((x.limbs[0] >> 16) & 0xFF)
 	a[30] = byte((x.limbs[0] >> 8) & 0xFF)
 	a[31] = byte(x.limbs[0] & 0xFF)
+}
+
+// SizeHint implements the surge.SizeHinter interface.
+func (x *Secp256k1N) SizeHint() int { return 32 }
+
+// Marshal implements the surge.Marshaler interface.
+func (x *Secp256k1N) Marshal(w io.Writer, m int) (int, error) {
+	if m < 32 {
+		return m, surge.ErrMaxBytesExceeded
+	}
+	var bs [32]byte
+	x.GetB32(bs[:])
+	n, err := w.Write(bs[:])
+	return m - n, err
+}
+
+// Unmarshal implements the surge.Unmarshaler interface.
+func (x *Secp256k1N) Unmarshal(r io.Reader, m int) (int, error) {
+	if m < 32 {
+		return m, surge.ErrMaxBytesExceeded
+	}
+	var bs [32]byte
+	n, err := io.ReadFull(r, bs[:])
+	m -= n
+	if err != nil {
+		return m, err
+	}
+	x.SetB32(bs[:])
+	return m, nil
 }
 
 // Uint64 returns x truncated to 64 bits. Note that this will only return
