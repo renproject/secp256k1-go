@@ -326,10 +326,10 @@ func (x *Secp256k1N) GetB32(a []byte) {
 }
 
 // SizeHint implements the surge.SizeHinter interface.
-func (x *Secp256k1N) SizeHint() int { return 32 }
+func (x Secp256k1N) SizeHint() int { return 32 }
 
 // Marshal implements the surge.Marshaler interface.
-func (x *Secp256k1N) Marshal(w io.Writer, m int) (int, error) {
+func (x Secp256k1N) Marshal(w io.Writer, m int) (int, error) {
 	if m < 32 {
 		return m, surge.ErrMaxBytesExceeded
 	}
